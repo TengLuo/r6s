@@ -1,0 +1,25 @@
+{
+  "_meta": {
+    "isExampleData": true,
+    "note": "占位数据:该地图的战术标注尚未制作,仅用于打通地图列表与详情页路由。"
+  },
+  "id": "villa",
+  "name": "别墅 Villa",
+  "floors": [
+    {
+      "id": "1f",
+      "name": "1F",
+      "image": "/maps/_placeholder/floor.svg",
+      "imageSize": {
+        "width": 1000,
+        "height": 700
+      }
+    }
+  ],
+  "walls": [],
+  "hatches": [],
+  "rotates": [],
+  "textLabels": [],
+  "operators": {},
+  "presets": []
+}

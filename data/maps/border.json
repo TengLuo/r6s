@@ -1,0 +1,52 @@
+{
+  "_meta": {
+    "isExampleData": false,
+    "note": "底图为用户从育碧官网下载的真实 Border 地图蓝图(1F/2F/屋顶)。战术标注(墙体/天窗/转点洞/道具位)尚未人工核对,当前为空,待用 /editor 编辑器实际标注后填入。"
+  },
+  "id": "border",
+  "name": "国境 Border",
+  "floors": [
+    {
+      "id": "1f",
+      "name": "1F",
+      "image": "/maps/border/1f.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    },
+    {
+      "id": "2f",
+      "name": "2F",
+      "image": "/maps/border/2f.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    },
+    {
+      "id": "roof",
+      "name": "屋顶",
+      "image": "/maps/border/roof.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    }
+  ],
+  "walls": [],
+  "hatches": [],
+  "rotates": [],
+  "textLabels": [],
+  "operators": {
+    "mira": {
+      "name": "Mira",
+      "placements": []
+    },
+    "valkyrie": {
+      "name": "Valkyrie",
+      "placements": []
+    }
+  },
+  "presets": []
+}
