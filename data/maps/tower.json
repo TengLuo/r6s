@@ -1,0 +1,52 @@
+{
+  "_meta": {
+    "isExampleData": false,
+    "note": "底图为用户从育碧官网下载的真实地图蓝图,战术标注待用 /editor 编辑器实际标注后填入。"
+  },
+  "id": "tower",
+  "name": "塔楼 Tower",
+  "floors": [
+    {
+      "id": "1f",
+      "name": "1F",
+      "image": "/maps/tower/1f.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    },
+    {
+      "id": "2f",
+      "name": "2F",
+      "image": "/maps/tower/2f.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    },
+    {
+      "id": "3f",
+      "name": "3F",
+      "image": "/maps/tower/3f.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    },
+    {
+      "id": "roof",
+      "name": "屋顶",
+      "image": "/maps/tower/roof.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    }
+  ],
+  "walls": [],
+  "openings": [],
+  "textLabels": [],
+  "operators": {},
+  "commonPlacements": [],
+  "presets": []
+}

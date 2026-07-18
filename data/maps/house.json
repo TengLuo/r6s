@@ -1,0 +1,52 @@
+{
+  "_meta": {
+    "isExampleData": false,
+    "note": "底图为用户从育碧官网下载的真实地图蓝图,战术标注待用 /editor 编辑器实际标注后填入。"
+  },
+  "id": "house",
+  "name": "民宅 House",
+  "floors": [
+    {
+      "id": "b1",
+      "name": "地下室",
+      "image": "/maps/house/b1.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    },
+    {
+      "id": "1f",
+      "name": "1F",
+      "image": "/maps/house/1f.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    },
+    {
+      "id": "2f",
+      "name": "2F",
+      "image": "/maps/house/2f.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    },
+    {
+      "id": "roof",
+      "name": "屋顶(阁楼)",
+      "image": "/maps/house/roof.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    }
+  ],
+  "walls": [],
+  "openings": [],
+  "textLabels": [],
+  "operators": {},
+  "commonPlacements": [],
+  "presets": []
+}

@@ -23,30 +23,41 @@ export interface Floor {
   imageSize: FloorSize;
 }
 
-export type WallState = "must_reinforce" | "never_reinforce" | "situational";
-
 export interface Wall {
   id: string;
   floor: string;
-  state: WallState;
   /** 线段两端点,像素坐标 */
   points: [Point, Point];
+  /** 这段墙包含几片可加固面板,省略或 1 表示单片,徽章上显示"墙×N" */
+  count?: number;
+  /** 「墙」徽章的单独缩放倍数(不影响墙线长度/粗细),省略视为 1 */
+  size?: number;
+  /** 「墙」徽章的旋转角度,单位度,只转徽章本身,不影响墙线的两个端点,省略视为 0 */
+  rotation?: number;
   note?: string;
 }
 
-export interface Hatch {
-  id: string;
-  floor: string;
-  pos: Point;
-  note?: string;
-}
+/**
+ * 洞口用途:
+ * - vault 翻越洞:需要翻窗动作才能过去的大洞,动作慢、有硬直
+ * - walkthrough 过人洞:不用翻窗,直接走/蹲过去
+ * - gunfight 对枪洞:胸口/头部高度,专门用来对枪的小洞
+ * - foot 脚洞:贴地小洞,打脚踝角度
+ * - floor 跳层洞:打穿地板/天花板临时换楼层(区别于固定结构的天窗)
+ */
+export type OpeningPurpose = "vault" | "walkthrough" | "gunfight" | "foot" | "floor";
 
-export interface Rotate {
+export interface Opening {
   id: string;
   floor: string;
   pos: Point;
-  /** 转到的楼层 id,便于查看器提示"可转至 X 楼" */
+  purpose: OpeningPurpose;
+  /** 仅 floor(跳层洞)类型有意义:通向的楼层 id */
   connectsTo?: string;
+  /** 徽章的单独缩放倍数,省略视为 1 */
+  size?: number;
+  /** 徽章的旋转角度,单位度,省略视为 0 */
+  rotation?: number;
   note?: string;
 }
 
@@ -56,6 +67,10 @@ export interface TextLabel {
   floor: string;
   pos: Point;
   text: string;
+  /** 文字/底板的单独缩放倍数,省略视为 1 */
+  size?: number;
+  /** 文字/底板的旋转角度,单位度,省略视为 0 */
+  rotation?: number;
 }
 
 export type PlacementTier = "core" | "alternative";
@@ -78,6 +93,8 @@ export interface Placement {
   screenshot?: string;
   /** 道具 id:干员专属道具或通用道具(camera/deployable_shield),对应 lib/operators.ts */
   gadgetId?: string;
+  /** 标记点的单独缩放倍数,省略视为 1 */
+  size?: number;
 }
 
 export interface OperatorData {
@@ -91,8 +108,6 @@ export interface Preset {
   id: string;
   name: string;
   isDefault?: boolean;
-  /** 该方案下对默认墙体状态的覆盖,key 为 wall id */
-  wallOverrides?: Record<string, WallState>;
   /** 该方案下启用的道具位 id 列表;省略时表示全部启用 */
   activePlacementIds?: string[];
 }
@@ -102,23 +117,46 @@ export interface MapData {
   name: string;
   floors: Floor[];
   walls: Wall[];
-  hatches: Hatch[];
-  rotates: Rotate[];
+  openings: Opening[];
   textLabels: TextLabel[];
   operators: Record<string, OperatorData>;
+  /**
+   * 不挂在具体某个干员名下的通用道具位(摄像头/部署盾/手雷之类,任何干员都能摆)。
+   * 跟 openings 一样是独立于干员的标记,不需要先选干员才能标注。
+   */
+  commonPlacements: Placement[];
   presets: Preset[];
 }
 
-export const WALL_STATE_LABEL: Record<WallState, string> = {
-  must_reinforce: "必封墙",
-  never_reinforce: "禁封墙",
-  situational: "情况墙",
+export const OPENING_PURPOSE_LABEL: Record<OpeningPurpose, string> = {
+  vault: "翻越洞",
+  walkthrough: "过人洞",
+  gunfight: "对枪洞",
+  foot: "脚洞",
+  floor: "跳层洞",
+};
+
+/** 洞口徽章上显示的单字 */
+export const OPENING_PURPOSE_GLYPH: Record<OpeningPurpose, string> = {
+  vault: "翻",
+  walkthrough: "过",
+  gunfight: "枪",
+  foot: "脚",
+  floor: "跳",
+};
+
+export const OPENING_PURPOSE_COLOR: Record<OpeningPurpose, string> = {
+  vault: "#ea580c",
+  walkthrough: "#2563eb",
+  gunfight: "#dc2626",
+  foot: "#7c2d12",
+  floor: "#ca8a04",
 };
 
 /** MapViewer 点击标记后向外抛出的统一事件负载 */
 export type SelectedMarker =
   | { kind: "wall"; data: Wall }
-  | { kind: "hatch"; data: Hatch }
-  | { kind: "rotate"; data: Rotate }
+  | { kind: "opening"; data: Opening }
   | { kind: "textLabel"; data: TextLabel }
-  | { kind: "placement"; data: Placement; operatorId: string; operatorName: string };
+  | { kind: "placement"; data: Placement; operatorId: string; operatorName: string }
+  | { kind: "commonPlacement"; data: Placement };

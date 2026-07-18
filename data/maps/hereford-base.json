@@ -1,0 +1,61 @@
+{
+  "_meta": {
+    "isExampleData": false,
+    "note": "底图为用户从育碧官网下载的真实地图蓝图,战术标注待用 /editor 编辑器实际标注后填入。"
+  },
+  "id": "hereford-base",
+  "name": "赫里福德基地 Hereford Base",
+  "floors": [
+    {
+      "id": "b1",
+      "name": "地下室",
+      "image": "/maps/hereford-base/b1.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    },
+    {
+      "id": "1f",
+      "name": "1F",
+      "image": "/maps/hereford-base/1f.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    },
+    {
+      "id": "2f",
+      "name": "2F",
+      "image": "/maps/hereford-base/2f.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    },
+    {
+      "id": "3f",
+      "name": "3F",
+      "image": "/maps/hereford-base/3f.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    },
+    {
+      "id": "roof",
+      "name": "屋顶",
+      "image": "/maps/hereford-base/roof.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    }
+  ],
+  "walls": [],
+  "openings": [],
+  "textLabels": [],
+  "operators": {},
+  "commonPlacements": [],
+  "presets": []
+}

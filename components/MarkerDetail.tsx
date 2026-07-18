@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { WALL_STATE_LABEL, type SelectedMarker } from "@/lib/schema";
+import { OPENING_PURPOSE_LABEL, type SelectedMarker } from "@/lib/schema";
 
 interface MarkerDetailProps {
   marker: SelectedMarker | null;
@@ -42,38 +42,26 @@ function MarkerBody({ marker }: { marker: SelectedMarker }) {
       const wall = marker.data;
       return (
         <div className="space-y-2">
-          <span className="inline-block rounded bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+          <span className="inline-block rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950 dark:text-red-300">
             墙体
           </span>
-          <h2 className="text-lg font-semibold">{WALL_STATE_LABEL[wall.state]}</h2>
+          <h2 className="text-lg font-semibold">封墙</h2>
           {wall.note && <p className="text-sm text-neutral-600 dark:text-neutral-400">{wall.note}</p>}
         </div>
       );
     }
-    case "hatch": {
-      const hatch = marker.data;
-      return (
-        <div className="space-y-2">
-          <span className="inline-block rounded bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-950 dark:text-purple-300">
-            天窗
-          </span>
-          <h2 className="text-lg font-semibold">天窗</h2>
-          {hatch.note && <p className="text-sm text-neutral-600 dark:text-neutral-400">{hatch.note}</p>}
-        </div>
-      );
-    }
-    case "rotate": {
-      const rotate = marker.data;
+    case "opening": {
+      const opening = marker.data;
       return (
         <div className="space-y-2">
           <span className="inline-block rounded bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-950 dark:text-orange-300">
-            转点洞
+            洞口
           </span>
-          <h2 className="text-lg font-semibold">转点洞</h2>
-          {rotate.connectsTo && (
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">可转至:{rotate.connectsTo}</p>
+          <h2 className="text-lg font-semibold">{OPENING_PURPOSE_LABEL[opening.purpose]}</h2>
+          {opening.connectsTo && (
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">通向:{opening.connectsTo}</p>
           )}
-          {rotate.note && <p className="text-sm text-neutral-600 dark:text-neutral-400">{rotate.note}</p>}
+          {opening.note && <p className="text-sm text-neutral-600 dark:text-neutral-400">{opening.note}</p>}
         </div>
       );
     }
@@ -95,6 +83,34 @@ function MarkerBody({ marker }: { marker: SelectedMarker }) {
           <div className="flex items-center gap-2">
             <span className="inline-block rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-950 dark:text-green-300">
               {operatorName}
+            </span>
+            <span className="inline-block rounded bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+              {placement.tier === "core" ? "核心位" : "备用位"}
+            </span>
+          </div>
+          <h2 className="text-lg font-semibold">{placement.title}</h2>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">{placement.description}</p>
+          {placement.screenshot && (
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800">
+              <Image
+                src={placement.screenshot}
+                alt={placement.title}
+                fill
+                sizes="(min-width: 768px) 24rem, 100vw"
+                className="object-cover"
+              />
+            </div>
+          )}
+        </div>
+      );
+    }
+    case "commonPlacement": {
+      const placement = marker.data;
+      return (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="inline-block rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+              通用道具
             </span>
             <span className="inline-block rounded bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
               {placement.tier === "core" ? "核心位" : "备用位"}

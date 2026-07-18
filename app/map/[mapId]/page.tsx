@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import MapPageClient from "@/components/MapPageClient";
-import { getMapData, listMaps } from "@/lib/maps";
+import { getMapData, listMaps, listOtherMaps } from "@/lib/maps";
 
 export function generateStaticParams() {
-  return listMaps().map((map) => ({ mapId: map.id }));
+  return [...listMaps(), ...listOtherMaps()].map((map) => ({ mapId: map.id }));
 }
 
 export async function generateMetadata({

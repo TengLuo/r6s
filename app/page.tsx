@@ -1,9 +1,10 @@
 import Link from "next/link";
 import MapCard from "@/components/MapCard";
-import { isMapAnnotated, listMaps } from "@/lib/maps";
+import { isMapAnnotated, listMaps, listOtherMaps } from "@/lib/maps";
 
 export default function Home() {
   const maps = listMaps();
+  const otherMaps = listOtherMaps();
   const annotatedCount = maps.filter(isMapAnnotated).length;
 
   return (
@@ -48,6 +49,21 @@ export default function Home() {
             <MapCard key={map.id} map={map} index={index} annotated={isMapAnnotated(map)} />
           ))}
         </div>
+
+        {otherMaps.length > 0 && (
+          <>
+            <div className="mt-16 flex items-center gap-3">
+              <h2 className="font-mono text-xs tracking-[0.3em] text-neutral-500">其他地图</h2>
+              <div className="h-px flex-1 bg-white/10" />
+            </div>
+            <p className="mt-2 text-sm text-neutral-500">不在 Rank 池。</p>
+            <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {otherMaps.map((map, index) => (
+                <MapCard key={map.id} map={map} index={index} annotated={isMapAnnotated(map)} />
+              ))}
+            </div>
+          </>
+        )}
       </main>
     </div>
   );

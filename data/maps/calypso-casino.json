@@ -1,25 +1,52 @@
 {
   "_meta": {
-    "isExampleData": true,
-    "note": "占位数据:该地图的战术标注尚未制作,仅用于打通地图列表与详情页路由。"
+    "isExampleData": false,
+    "note": "底图为用户从育碧官网下载的真实地图蓝图,战术标注待用 /editor 编辑器实际标注后填入。"
   },
   "id": "calypso-casino",
   "name": "卡利普索赌场 Calypso Casino",
   "floors": [
     {
+      "id": "b1",
+      "name": "地下室",
+      "image": "/maps/calypso-casino/b1.png",
+      "imageSize": {
+        "width": 3840,
+        "height": 2160
+      }
+    },
+    {
       "id": "1f",
       "name": "1F",
-      "image": "/maps/_placeholder/floor.svg",
+      "image": "/maps/calypso-casino/1f.png",
       "imageSize": {
-        "width": 1000,
-        "height": 700
+        "width": 3840,
+        "height": 2160
+      }
+    },
+    {
+      "id": "2f",
+      "name": "2F",
+      "image": "/maps/calypso-casino/2f.png",
+      "imageSize": {
+        "width": 3840,
+        "height": 2160
+      }
+    },
+    {
+      "id": "roof",
+      "name": "屋顶",
+      "image": "/maps/calypso-casino/roof.png",
+      "imageSize": {
+        "width": 3840,
+        "height": 2160
       }
     }
   ],
   "walls": [],
-  "hatches": [],
-  "rotates": [],
+  "openings": [],
   "textLabels": [],
   "operators": {},
-  "presets": []
+  "presets": [],
+  "commonPlacements": []
 }

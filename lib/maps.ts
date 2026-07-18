@@ -16,6 +16,16 @@ import kanal from "@/data/maps/kanal.json";
 import emeraldPlains from "@/data/maps/emerald-plains.json";
 import outback from "@/data/maps/outback.json";
 import skyscraper from "@/data/maps/skyscraper.json";
+import closeQuarter from "@/data/maps/close-quarter.json";
+import favela from "@/data/maps/favela.json";
+import fortress from "@/data/maps/fortress.json";
+import herefordBase from "@/data/maps/hereford-base.json";
+import house from "@/data/maps/house.json";
+import plane from "@/data/maps/plane.json";
+import stadiumAlpha from "@/data/maps/stadium-alpha.json";
+import stadiumBravo from "@/data/maps/stadium-bravo.json";
+import tower from "@/data/maps/tower.json";
+import yacht from "@/data/maps/yacht.json";
 
 // 顺序即首页展示顺序:先放已有完整标注的图,其余按常见排位池顺序排列。
 export const MAPS: Record<string, MapData> = {
@@ -36,18 +46,40 @@ export const MAPS: Record<string, MapData> = {
   "emerald-plains": emeraldPlains as unknown as MapData,
   outback: outback as unknown as MapData,
   skyscraper: skyscraper as unknown as MapData,
+  fortress: fortress as unknown as MapData,
 };
 
+/** 不在当前排位池里的地图(退环境/竞技赛专用/测试图等),单独一份名单,
+ * 首页会分成两个区块展示,不跟排位地图的统计数字混在一起。 */
+export const OTHER_MAPS: Record<string, MapData> = {
+  "close-quarter": closeQuarter as unknown as MapData,
+  favela: favela as unknown as MapData,
+  "hereford-base": herefordBase as unknown as MapData,
+  house: house as unknown as MapData,
+  plane: plane as unknown as MapData,
+  "stadium-alpha": stadiumAlpha as unknown as MapData,
+  "stadium-bravo": stadiumBravo as unknown as MapData,
+  tower: tower as unknown as MapData,
+  yacht: yacht as unknown as MapData,
+};
+
+/** 编辑器"从已注册地图加载"下拉用:排位池 + 其他地图合并成一份完整名单 */
+export const ALL_MAPS: Record<string, MapData> = { ...MAPS, ...OTHER_MAPS };
+
 export function getMapData(mapId: string): MapData | undefined {
-  return MAPS[mapId];
+  return ALL_MAPS[mapId];
 }
 
 export function listMaps(): MapData[] {
   return Object.values(MAPS);
 }
 
+export function listOtherMaps(): MapData[] {
+  return Object.values(OTHER_MAPS);
+}
+
 /** 该图是否已有真实/示例战术标注内容,还是仅有占位底图 */
 export function isMapAnnotated(map: MapData): boolean {
   const hasPlacements = Object.values(map.operators).some((op) => op.placements.length > 0);
-  return map.walls.length > 0 || map.hatches.length > 0 || map.rotates.length > 0 || hasPlacements;
+  return map.walls.length > 0 || map.openings.length > 0 || hasPlacements || map.commonPlacements.length > 0;
 }

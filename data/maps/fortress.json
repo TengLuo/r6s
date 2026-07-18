@@ -1,0 +1,43 @@
+{
+  "_meta": {
+    "isExampleData": false,
+    "note": "底图为用户从育碧官网下载的真实地图蓝图,战术标注待用 /editor 编辑器实际标注后填入。"
+  },
+  "id": "fortress",
+  "name": "要塞 Fortress",
+  "floors": [
+    {
+      "id": "1f",
+      "name": "1F",
+      "image": "/maps/fortress/1f.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    },
+    {
+      "id": "2f",
+      "name": "2F",
+      "image": "/maps/fortress/2f.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    },
+    {
+      "id": "roof",
+      "name": "屋顶",
+      "image": "/maps/fortress/roof.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    }
+  ],
+  "walls": [],
+  "openings": [],
+  "textLabels": [],
+  "operators": {},
+  "commonPlacements": [],
+  "presets": []
+}

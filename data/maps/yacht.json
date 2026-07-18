@@ -1,0 +1,52 @@
+{
+  "_meta": {
+    "isExampleData": false,
+    "note": "底图为用户从育碧官网下载的真实地图蓝图,战术标注待用 /editor 编辑器实际标注后填入。"
+  },
+  "id": "yacht",
+  "name": "游艇 Yacht",
+  "floors": [
+    {
+      "id": "1f",
+      "name": "1F",
+      "image": "/maps/yacht/1f.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    },
+    {
+      "id": "2f",
+      "name": "2F",
+      "image": "/maps/yacht/2f.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    },
+    {
+      "id": "3f",
+      "name": "3F",
+      "image": "/maps/yacht/3f.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    },
+    {
+      "id": "roof",
+      "name": "屋顶",
+      "image": "/maps/yacht/roof.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    }
+  ],
+  "walls": [],
+  "openings": [],
+  "textLabels": [],
+  "operators": {},
+  "commonPlacements": [],
+  "presets": []
+}

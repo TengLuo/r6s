@@ -1,7 +1,7 @@
 "use client";
 
 import MapStage from "@/components/MapStage";
-import { DEFAULT_OPERATOR_COLOR, OPERATOR_COLOR, PlacementMarker, PointMarker, TextLabelMarker, WallLine } from "@/components/mapMarkers";
+import { COMMON_GADGET_COLOR, getOperatorColor, OpeningMarker, PlacementMarker, TextLabelMarker, WallLine } from "@/components/mapMarkers";
 import type { Floor, MapData, SelectedMarker } from "@/lib/schema";
 
 interface MapViewerProps {
@@ -22,9 +22,9 @@ export default function MapViewer({
   onSelect,
 }: MapViewerProps) {
   const walls = mapData.walls.filter((w) => w.floor === floor.id);
-  const hatches = mapData.hatches.filter((h) => h.floor === floor.id);
-  const rotates = mapData.rotates.filter((r) => r.floor === floor.id);
+  const openings = mapData.openings.filter((o) => o.floor === floor.id);
   const textLabels = mapData.textLabels.filter((t) => t.floor === floor.id);
+  const commonPlacements = mapData.commonPlacements.filter((p) => p.floor === floor.id);
 
   const operatorEntries = Object.entries(mapData.operators).filter(
     ([opId]) => !activeOperatorId || opId === activeOperatorId
@@ -49,25 +49,21 @@ export default function MapViewer({
         />
       ))}
 
-      {hatches.map((hatch) => (
-        <PointMarker
-          key={hatch.id}
-          x={hatch.pos.x}
-          y={hatch.pos.y}
-          fill="#9333ea"
-          shape="diamond"
-          onClick={() => onSelect({ kind: "hatch", data: hatch })}
+      {openings.map((opening) => (
+        <OpeningMarker
+          key={opening.id}
+          opening={opening}
+          onClick={() => onSelect({ kind: "opening", data: opening })}
         />
       ))}
 
-      {rotates.map((rotate) => (
-        <PointMarker
-          key={rotate.id}
-          x={rotate.pos.x}
-          y={rotate.pos.y}
-          fill="#ea580c"
-          shape="triangle"
-          onClick={() => onSelect({ kind: "rotate", data: rotate })}
+      {/* 通用道具位不挂在任何干员名下,不受干员筛选影响,一直显示 */}
+      {commonPlacements.map((placement) => (
+        <PlacementMarker
+          key={placement.id}
+          placement={placement}
+          color={COMMON_GADGET_COLOR}
+          onClick={() => onSelect({ kind: "commonPlacement", data: placement })}
         />
       ))}
 
@@ -78,7 +74,8 @@ export default function MapViewer({
             <PlacementMarker
               key={placement.id}
               placement={placement}
-              color={OPERATOR_COLOR[opId] ?? DEFAULT_OPERATOR_COLOR}
+              color={getOperatorColor(opId)}
+              icon={op.icon}
               onClick={() =>
                 onSelect({
                   kind: "placement",

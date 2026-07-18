@@ -1,25 +1,52 @@
 {
   "_meta": {
-    "isExampleData": true,
-    "note": "占位数据:该地图的战术标注尚未制作,仅用于打通地图列表与详情页路由。"
+    "isExampleData": false,
+    "note": "底图为用户从育碧官网下载的真实地图蓝图,战术标注待用 /editor 编辑器实际标注后填入。"
   },
   "id": "consulate",
   "name": "领事馆 Consulate",
   "floors": [
     {
+      "id": "b1",
+      "name": "地下室",
+      "image": "/maps/consulate/b1.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    },
+    {
       "id": "1f",
       "name": "1F",
-      "image": "/maps/_placeholder/floor.svg",
+      "image": "/maps/consulate/1f.jpg",
       "imageSize": {
-        "width": 1000,
-        "height": 700
+        "width": 1600,
+        "height": 900
+      }
+    },
+    {
+      "id": "2f",
+      "name": "2F",
+      "image": "/maps/consulate/2f.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
+      }
+    },
+    {
+      "id": "roof",
+      "name": "屋顶",
+      "image": "/maps/consulate/roof.jpg",
+      "imageSize": {
+        "width": 1600,
+        "height": 900
       }
     }
   ],
   "walls": [],
-  "hatches": [],
-  "rotates": [],
+  "openings": [],
   "textLabels": [],
   "operators": {},
-  "presets": []
+  "presets": [],
+  "commonPlacements": []
 }

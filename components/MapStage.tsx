@@ -1,8 +1,11 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useRef } from "react";
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import { TransformWrapper, TransformComponent, type ReactZoomPanPinchRef } from "react-zoom-pan-pinch";
 import type { Floor } from "@/lib/schema";
+
+const MIN_SCALE = 0.5;
+const MAX_SCALE = 6;
 
 export interface ImagePoint {
   x: number;
@@ -40,7 +43,27 @@ const MapStage = forwardRef<MapStageHandle, MapStageProps>(function MapStage(
   ref
 ) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const transformRef = useRef<ReactZoomPanPinchRef>(null);
   const { width, height } = floor.imageSize;
+
+  /** 让底图默认就撑满可视区域(而不是按图片原始像素 1:1 显示导致看起来很小),
+   * 用外层容器实际尺寸算出"刚好完整装下整张图"的缩放倍数。 */
+  const fitToView = () => {
+    const zoomRef = transformRef.current;
+    const wrapperEl = zoomRef?.instance.wrapperComponent;
+    if (!zoomRef || !wrapperEl || !wrapperEl.clientWidth || !wrapperEl.clientHeight) return;
+    const scale = Math.min(
+      MAX_SCALE,
+      Math.max(MIN_SCALE, Math.min(wrapperEl.clientWidth / width, wrapperEl.clientHeight / height))
+    );
+    zoomRef.centerView(scale, 0);
+  };
+
+  // 楼层/底图切换(尺寸可能不同)时也重新适配一次
+  useEffect(() => {
+    fitToView();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [width, height]);
 
   const toImagePoint = (clientX: number, clientY: number): ImagePoint | null => {
     const svg = svgRef.current;
@@ -66,11 +89,14 @@ const MapStage = forwardRef<MapStageHandle, MapStageProps>(function MapStage(
 
   return (
     <TransformWrapper
-      minScale={0.5}
-      maxScale={6}
+      ref={transformRef}
+      minScale={MIN_SCALE}
+      maxScale={MAX_SCALE}
       centerOnInit
+      onInit={fitToView}
       doubleClick={{ mode: "toggle" }}
       panning={{ disabled: panningDisabled }}
+      wheel={{ step: 0.0015 }}
     >
       <TransformComponent
         wrapperStyle={{ width: "100%", height: "100%" }}
