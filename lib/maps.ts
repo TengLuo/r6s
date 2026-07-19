@@ -22,8 +22,6 @@ import fortress from "@/data/maps/fortress.json";
 import herefordBase from "@/data/maps/hereford-base.json";
 import house from "@/data/maps/house.json";
 import plane from "@/data/maps/plane.json";
-import stadiumAlpha from "@/data/maps/stadium-alpha.json";
-import stadiumBravo from "@/data/maps/stadium-bravo.json";
 import tower from "@/data/maps/tower.json";
 import yacht from "@/data/maps/yacht.json";
 
@@ -57,8 +55,6 @@ export const OTHER_MAPS: Record<string, MapData> = {
   "hereford-base": herefordBase as unknown as MapData,
   house: house as unknown as MapData,
   plane: plane as unknown as MapData,
-  "stadium-alpha": stadiumAlpha as unknown as MapData,
-  "stadium-bravo": stadiumBravo as unknown as MapData,
   tower: tower as unknown as MapData,
   yacht: yacht as unknown as MapData,
 };

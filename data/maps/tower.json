@@ -25,15 +25,6 @@
       }
     },
     {
-      "id": "3f",
-      "name": "3F",
-      "image": "/maps/tower/3f.jpg",
-      "imageSize": {
-        "width": 1600,
-        "height": 900
-      }
-    },
-    {
       "id": "roof",
       "name": "屋顶",
       "image": "/maps/tower/roof.jpg",

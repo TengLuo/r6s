@@ -174,8 +174,6 @@ export default function MapEditor() {
   const [handlesVisible, setHandlesVisible] = useState(false);
   const [handlesPingAt, setHandlesPingAt] = useState(0);
   const [history, setHistory] = useState<MapData[]>([]);
-  const [newOperatorId, setNewOperatorId] = useState("");
-  const [newOperatorName, setNewOperatorName] = useState("");
   const [imagePathHints, setImagePathHints] = useState<Record<string, string>>({});
   const [iconScale, setIconScale] = useState(1);
   const [drawColor, setDrawColor] = useState(DRAW_COLORS[0]);
@@ -732,21 +730,6 @@ export default function MapEditor() {
     setActiveGadgetId(id ? getOperatorInfo(id)?.gadget?.id ?? null : null);
     // 选干员本身就代表"我要开始摆道具位了",不需要再额外点一次左侧的工具按钮
     if (id) setTool("placement");
-  }
-
-  function addOperator() {
-    const id = newOperatorId.trim();
-    const name = newOperatorName.trim();
-    if (!id || !name) return;
-    if (mapData.operators[id]) {
-      window.alert("该干员 id 已存在");
-      return;
-    }
-    patch((md) => ({ ...md, operators: { ...md.operators, [id]: { name, placements: [] } } }));
-    setActiveOperatorId(id);
-    setActiveGadgetId(null);
-    setNewOperatorId("");
-    setNewOperatorName("");
   }
 
   const selectedWall = selection?.kind === "wall" ? mapData.walls.find((w) => w.id === selection.id) : undefined;
