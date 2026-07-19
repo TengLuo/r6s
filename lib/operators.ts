@@ -16,6 +16,8 @@ export type OperatorRole = "attack" | "defend";
 export interface GadgetInfo {
   id: string;
   name: string;
+  /** 图标路径,相对 /public,例如 /gadgets/proximity_alarm.avif;没有就留空,界面会退化成占位圆点 */
+  icon?: string;
 }
 
 export interface OperatorInfo {
@@ -29,24 +31,24 @@ export interface OperatorInfo {
 
 /** 防守方通用道具(不绑定具体干员,官方"防守干员通用装备"列表) */
 export const COMMON_GADGETS_DEFEND: GadgetInfo[] = [
-  { id: "camera", name: "防弹摄像头" },
-  { id: "deployable_shield", name: "部署盾" },
-  { id: "barbed_wire", name: "铁丝网" },
-  { id: "observation_blocker", name: "侦查阻断器" },
-  { id: "impact_grenade", name: "冲击手雷" },
-  { id: "nitro_cell", name: "硝化炸药" },
-  { id: "proximity_alarm", name: "警报传感器" },
+  { id: "camera", name: "防弹摄像头", icon: "/gadgets/defend/camera.avif" },
+  { id: "deployable_shield", name: "部署盾", icon: "/gadgets/defend/deployable_shield.avif" },
+  { id: "barbed_wire", name: "铁丝网", icon: "/gadgets/defend/barbed_wire.webp" },
+  { id: "observation_blocker", name: "侦查阻断器", icon: "/gadgets/defend/observation_blocker.avif" },
+  { id: "impact_grenade", name: "冲击手雷", icon: "/gadgets/defend/impact_grenade.avif" },
+  { id: "nitro_cell", name: "硝化炸药", icon: "/gadgets/defend/nitro_cell.avif" },
+  { id: "proximity_alarm", name: "警报传感器", icon: "/gadgets/defend/proximity_alarm.avif" },
 ];
 
 /** 进攻方通用道具(官方"进攻干员通用装备"列表) */
 export const COMMON_GADGETS_ATTACK: GadgetInfo[] = [
-  { id: "breach_charge", name: "破坏装置" },
-  { id: "claymore", name: "诡雷" },
-  { id: "frag_grenade", name: "破片手雷" },
-  { id: "hard_breach_charge", name: "硬破坏装置" },
-  { id: "smoke_grenade", name: "烟雾弹" },
-  { id: "stun_grenade", name: "眩晕手雷" },
-  { id: "impact_emp_grenade", name: "冲击电磁手雷" },
+  { id: "breach_charge", name: "破坏装置", icon: "/gadgets/attack/breach_charge.avif" },
+  { id: "claymore", name: "诡雷", icon: "/gadgets/attack/claymore.avif" },
+  { id: "frag_grenade", name: "破片手雷", icon: "/gadgets/attack/frag_grenade.avif" },
+  { id: "hard_breach_charge", name: "硬破坏装置", icon: "/gadgets/attack/hard_breach_charge.avif" },
+  { id: "smoke_grenade", name: "烟雾弹", icon: "/gadgets/attack/smoke_grenade.avif" },
+  { id: "stun_grenade", name: "眩晕手雷", icon: "/gadgets/attack/stun_grenade.avif" },
+  { id: "impact_emp_grenade", name: "冲击电磁手雷", icon: "/gadgets/attack/impact_emp_grenade.png" },
 ];
 
 export const DEFENDERS: OperatorInfo[] = [
@@ -153,4 +155,10 @@ export function findGadgetName(gadgetId: string | undefined, operatorId?: string
   if (common) return common.name;
   const operator = operatorId ? getOperatorInfo(operatorId) : OPERATORS.find((d) => d.gadget?.id === gadgetId);
   return operator?.gadget?.id === gadgetId ? operator.gadget.name : undefined;
+}
+
+/** 通用道具位(不挂靠干员)的标记图标用:按 gadgetId 找对应的通用道具图片 */
+export function getCommonGadgetIcon(gadgetId: string | undefined): string | undefined {
+  if (!gadgetId) return undefined;
+  return [...COMMON_GADGETS_DEFEND, ...COMMON_GADGETS_ATTACK].find((g) => g.id === gadgetId)?.icon;
 }

@@ -1,5 +1,6 @@
+import { getStroke } from "perfect-freehand";
 import { OPENING_PURPOSE_COLOR, OPENING_PURPOSE_GLYPH } from "@/lib/schema";
-import type { Opening, Placement, TextLabel, Wall } from "@/lib/schema";
+import type { Drawing, Opening, Placement, TextLabel, Wall } from "@/lib/schema";
 
 /** 封墙统一用一个颜色,不再分必封/禁封/情况三态 */
 export const WALL_COLOR = "#dc2626";
@@ -144,6 +145,8 @@ export function OpeningMarker({
     <g
       onClick={onClick}
       onPointerDown={onPointerDown}
+     
+     
       style={{ cursor: "pointer" }}
       transform={`translate(${opening.pos.x} ${opening.pos.y}) rotate(${opening.rotation ?? 0})`}
     >
@@ -200,6 +203,8 @@ export function TextLabelMarker({
     <g
       onClick={onClick}
       onPointerDown={onPointerDown}
+     
+     
       style={{ cursor: "pointer" }}
       transform={`translate(${label.pos.x} ${label.pos.y}) rotate(${label.rotation ?? 0})`}
     >
@@ -268,6 +273,8 @@ export function PlacementMarker({
     <g
       onClick={onClick}
       onPointerDown={onPointerDown}
+     
+     
       style={{ cursor: "pointer" }}
       transform={`translate(${x} ${y})`}
     >
@@ -293,7 +300,7 @@ export function PlacementMarker({
             clipPath={`url(#${clipId})`}
             opacity={markerOpacity}
             preserveAspectRatio="xMidYMid slice"
-            transform={typeof placement.facing === "number" ? `rotate(${placement.facing})` : undefined}
+            transform={typeof placement.iconRotation === "number" ? `rotate(${placement.iconRotation})` : undefined}
           />
           <circle r={radius} fill="none" stroke={color} strokeWidth={3} opacity={markerOpacity} />
         </>
@@ -310,6 +317,131 @@ export function PlacementMarker({
           strokeWidth={4}
           strokeLinecap="round"
           opacity={markerOpacity}
+        />
+      )}
+    </g>
+  );
+}
+
+/** 把 perfect-freehand 输出的轮廓点串成一条平滑闭合的 SVG path(官方文档的标准写法) */
+function getSvgPathFromStroke(stroke: number[][]): string {
+  if (!stroke.length) return "";
+  const d = stroke.reduce(
+    (acc, [x0, y0], i, arr) => {
+      const [x1, y1] = arr[(i + 1) % arr.length];
+      acc.push(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2);
+      return acc;
+    },
+    ["M", ...stroke[0], "Q"] as (string | number)[]
+  );
+  d.push("Z");
+  return d.join(" ");
+}
+
+/**
+ * 渲染一条手绘标注。画笔用 perfect-freehand 生成带笔锋的轮廓(填充多边形),
+ * 其余种类都是普通 SVG 图元。onErase 传了才响应点击(橡皮工具下),平时整层
+ * pointer-events 关掉,不挡地图上放置/选中标记的操作。
+ */
+export function DrawingShape({ drawing, onErase }: { drawing: Drawing; onErase?: SvgPointerHandler }) {
+  const { kind, points, color, width } = drawing;
+  if (points.length < 2) return null;
+
+  let body: React.ReactNode = null;
+  if (kind === "pen") {
+    const outline = getStroke(
+      points.map((p) => [p.x, p.y]),
+      { size: width * 1.6, thinning: 0.55, smoothing: 0.6, streamline: 0.4 }
+    );
+    body = <path d={getSvgPathFromStroke(outline)} fill={color} />;
+  } else if (kind === "highlighter") {
+    body = (
+      <polyline
+        points={points.map((p) => `${p.x},${p.y}`).join(" ")}
+        fill="none"
+        stroke={color}
+        strokeWidth={width * 3.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity={0.35}
+      />
+    );
+  } else {
+    const [p1, p2] = [points[0], points[points.length - 1]];
+    if (kind === "line" || kind === "arrow") {
+      const ang = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+      const headLen = kind === "arrow" ? Math.max(width * 3.5, 14) : 0;
+      // 箭头的线要缩短一点,别从箭头尖里戳出来
+      const endX = p2.x - headLen * 0.6 * Math.cos(ang);
+      const endY = p2.y - headLen * 0.6 * Math.sin(ang);
+      body = (
+        <>
+          <line x1={p1.x} y1={p1.y} x2={endX} y2={endY} stroke={color} strokeWidth={width} strokeLinecap="round" />
+          {kind === "arrow" && (
+            <polygon
+              points={[
+                `${p2.x},${p2.y}`,
+                `${p2.x - headLen * Math.cos(ang - 0.42)},${p2.y - headLen * Math.sin(ang - 0.42)}`,
+                `${p2.x - headLen * Math.cos(ang + 0.42)},${p2.y - headLen * Math.sin(ang + 0.42)}`,
+              ].join(" ")}
+              fill={color}
+            />
+          )}
+        </>
+      );
+    } else if (kind === "rect") {
+      body = (
+        <rect
+          x={Math.min(p1.x, p2.x)}
+          y={Math.min(p1.y, p2.y)}
+          width={Math.abs(p2.x - p1.x)}
+          height={Math.abs(p2.y - p1.y)}
+          fill="none"
+          stroke={color}
+          strokeWidth={width}
+          rx={2}
+        />
+      );
+    } else {
+      body = (
+        <ellipse
+          cx={(p1.x + p2.x) / 2}
+          cy={(p1.y + p2.y) / 2}
+          rx={Math.abs(p2.x - p1.x) / 2}
+          ry={Math.abs(p2.y - p1.y) / 2}
+          fill="none"
+          stroke={color}
+          strokeWidth={width}
+        />
+      );
+    }
+  }
+
+  if (!onErase) return <g>{body}</g>;
+
+  // 橡皮模式:叠一条加宽的透明描边扩大命中范围,整条笔迹点哪都能删
+  const hitStroke = Math.max(width * 4, 24);
+  return (
+    <g onPointerDown={onErase} style={{ cursor: "pointer" }}>
+      {body}
+      {kind === "pen" || kind === "highlighter" ? (
+        <polyline
+          points={points.map((p) => `${p.x},${p.y}`).join(" ")}
+          fill="none"
+          stroke="transparent"
+          strokeWidth={hitStroke}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      ) : (
+        <line
+          x1={points[0].x}
+          y1={points[0].y}
+          x2={points[points.length - 1].x}
+          y2={points[points.length - 1].y}
+          stroke="transparent"
+          strokeWidth={hitStroke}
+          strokeLinecap="round"
         />
       )}
     </g>

@@ -1,7 +1,8 @@
 "use client";
 
 import MapStage from "@/components/MapStage";
-import { COMMON_GADGET_COLOR, getOperatorColor, OpeningMarker, PlacementMarker, TextLabelMarker, WallLine } from "@/components/mapMarkers";
+import { COMMON_GADGET_COLOR, DrawingShape, getOperatorColor, OpeningMarker, PlacementMarker, TextLabelMarker, WallLine } from "@/components/mapMarkers";
+import { getCommonGadgetIcon } from "@/lib/operators";
 import type { Floor, MapData, SelectedMarker } from "@/lib/schema";
 
 interface MapViewerProps {
@@ -25,6 +26,7 @@ export default function MapViewer({
   const openings = mapData.openings.filter((o) => o.floor === floor.id);
   const textLabels = mapData.textLabels.filter((t) => t.floor === floor.id);
   const commonPlacements = mapData.commonPlacements.filter((p) => p.floor === floor.id);
+  const drawings = (mapData.drawings ?? []).filter((d) => d.floor === floor.id);
 
   const operatorEntries = Object.entries(mapData.operators).filter(
     ([opId]) => !activeOperatorId || opId === activeOperatorId
@@ -32,6 +34,13 @@ export default function MapViewer({
 
   return (
     <MapStage floor={floor}>
+      {/* 手绘标注垫底,不响应点击,不挡上层标记的交互 */}
+      <g style={{ pointerEvents: "none" }}>
+        {drawings.map((d) => (
+          <DrawingShape key={d.id} drawing={d} />
+        ))}
+      </g>
+
       {textLabels.map((label) => (
         <TextLabelMarker
           key={label.id}
@@ -63,6 +72,7 @@ export default function MapViewer({
           key={placement.id}
           placement={placement}
           color={COMMON_GADGET_COLOR}
+          icon={getCommonGadgetIcon(placement.gadgetId)}
           onClick={() => onSelect({ kind: "commonPlacement", data: placement })}
         />
       ))}

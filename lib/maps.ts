@@ -81,5 +81,11 @@ export function listOtherMaps(): MapData[] {
 /** 该图是否已有真实/示例战术标注内容,还是仅有占位底图 */
 export function isMapAnnotated(map: MapData): boolean {
   const hasPlacements = Object.values(map.operators).some((op) => op.placements.length > 0);
-  return map.walls.length > 0 || map.openings.length > 0 || hasPlacements || map.commonPlacements.length > 0;
+  return (
+    map.walls.length > 0 ||
+    map.openings.length > 0 ||
+    hasPlacements ||
+    map.commonPlacements.length > 0 ||
+    (map.drawings?.length ?? 0) > 0
+  );
 }

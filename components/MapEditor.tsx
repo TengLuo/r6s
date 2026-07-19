@@ -5,6 +5,7 @@ import MapStage, { type ImagePoint } from "@/components/MapStage";
 import {
   WALL_COLOR,
   COMMON_GADGET_COLOR,
+  DrawingShape,
   WallLine,
   OpeningMarker,
   PlacementMarker,
@@ -17,13 +18,14 @@ import {
   COMMON_GADGETS_ATTACK,
   COMMON_GADGETS_DEFEND,
   findGadgetName,
+  getCommonGadgetIcon,
   getGadgetOptions,
   getOperatorInfo,
   getOperatorsByRole,
   type OperatorRole,
 } from "@/lib/operators";
 import { OPENING_PURPOSE_COLOR, OPENING_PURPOSE_LABEL } from "@/lib/schema";
-import type { Floor, MapData, Opening, OpeningPurpose, Placement, PlacementTier, TextLabel, Wall } from "@/lib/schema";
+import type { Drawing, DrawingKind, Floor, MapData, Opening, OpeningPurpose, Placement, PlacementTier, TextLabel, Wall } from "@/lib/schema";
 
 type Tool =
   | "select"
@@ -34,7 +36,14 @@ type Tool =
   | "opening_foot"
   | "opening_floor"
   | "textLabel"
-  | "placement";
+  | "placement"
+  | "draw_pen"
+  | "draw_highlighter"
+  | "draw_line"
+  | "draw_arrow"
+  | "draw_rect"
+  | "draw_ellipse"
+  | "draw_eraser";
 
 const OPENING_PURPOSES: OpeningPurpose[] = ["vault", "walkthrough", "gunfight", "foot", "floor"];
 
@@ -57,6 +66,33 @@ const TOOLS: { id: Tool; label: string; color?: string }[] = [
   { id: "textLabel", label: "文字标注", color: "#64748b" },
 ];
 
+/** 画图工具与 Drawing.kind 的对应关系,橡皮不产生新笔迹所以不在这里 */
+const DRAW_TOOL_KIND: Partial<Record<Tool, DrawingKind>> = {
+  draw_pen: "pen",
+  draw_highlighter: "highlighter",
+  draw_line: "line",
+  draw_arrow: "arrow",
+  draw_rect: "rect",
+  draw_ellipse: "ellipse",
+};
+
+const DRAW_TOOLS: { id: Tool; label: string }[] = [
+  { id: "draw_pen", label: "画笔" },
+  { id: "draw_highlighter", label: "荧光笔" },
+  { id: "draw_line", label: "直线" },
+  { id: "draw_arrow", label: "箭头" },
+  { id: "draw_rect", label: "矩形" },
+  { id: "draw_ellipse", label: "圆圈" },
+  { id: "draw_eraser", label: "橡皮(点笔迹删除)" },
+];
+
+const DRAW_COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#ffffff", "#111111"];
+const DRAW_WIDTHS = [
+  { label: "细", value: 3 },
+  { label: "中", value: 6 },
+  { label: "粗", value: 10 },
+];
+
 type Selection =
   | { kind: "wall"; id: string }
   | { kind: "opening"; id: string }
@@ -66,7 +102,8 @@ type Selection =
 
 type Draft =
   | { kind: "wall"; start: ImagePoint; current: ImagePoint }
-  | { kind: "placement"; start: ImagePoint; current: ImagePoint };
+  | { kind: "placement"; start: ImagePoint; current: ImagePoint }
+  | { kind: "drawing"; drawKind: DrawingKind; points: ImagePoint[] };
 
 type DragTarget =
   | { kind: "wall-endpoint"; id: string; which: 0 | 1 }
@@ -74,12 +111,15 @@ type DragTarget =
   | { kind: "opening" | "textLabel" | "commonPlacement"; id: string }
   | { kind: "placement"; operatorId: string; id: string }
   | { kind: "resize"; target: Selection; center: ImagePoint }
-  | { kind: "rotate"; target: Selection; center: ImagePoint };
+  | { kind: "rotate"; target: Selection; center: ImagePoint }
+  | { kind: "rotateIcon"; target: Selection; center: ImagePoint };
 
 /** 单个标记的把手到中心的距离,对应 size=1 时的基准值(图片像素单位) */
 const RESIZE_HANDLE_BASE_DIST = 40;
 /** 旋转把手到中心的距离,固定值,不随 size 缩放,避免图标很大/很小时把手贴太近或飞太远 */
 const ROTATE_HANDLE_DIST = 46;
+/** 图标自转把手离中心更近一点,跟朝向/扇形把手拉开距离,不容易两个把手叠一块 */
+const ICON_ROTATE_HANDLE_DIST = 28;
 
 function genId(prefix: string) {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
@@ -103,6 +143,7 @@ function blankMapData(id: string, name: string, floor: Floor): MapData {
     textLabels: [],
     operators: {},
     commonPlacements: [],
+    drawings: [],
     presets: [],
   };
 }
@@ -123,11 +164,22 @@ export default function MapEditor() {
   const [selection, setSelection] = useState<Selection | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [dragTarget, setDragTarget] = useState<DragTarget | null>(null);
+  // 把手不常驻显示:选中/点击/拖拽这些"主动操作"的时刻才亮出来,之后 3 秒没有
+  // 新动作就自动淡出。特意不用悬停触发——把手会挡住/贴着标记本身的可点击区域,
+  // 淡出瞬间 pointer-events 从 auto 切到 none,鼠标不动也会让标记"重新露出来"触发
+  // 悬停,再把把手点亮,来回循环变成一直闪。改成只认真正的点击/拖拽就没这问题了。
+  // 倒计时用"记录最后一次操作时间 + effect 里 setTimeout"实现:千万不要把
+  // setTimeout 塞进 setState 的更新函数里——React 会把更新函数执行两次来检测
+  // 副作用,那样每次会多出一个清不掉的孤儿定时器,提前把刚亮出来的把手关掉。
+  const [handlesVisible, setHandlesVisible] = useState(false);
+  const [handlesPingAt, setHandlesPingAt] = useState(0);
   const [history, setHistory] = useState<MapData[]>([]);
   const [newOperatorId, setNewOperatorId] = useState("");
   const [newOperatorName, setNewOperatorName] = useState("");
   const [imagePathHints, setImagePathHints] = useState<Record<string, string>>({});
   const [iconScale, setIconScale] = useState(1);
+  const [drawColor, setDrawColor] = useState(DRAW_COLORS[0]);
+  const [drawWidth, setDrawWidth] = useState(DRAW_WIDTHS[1].value);
   const [showAddFloor, setShowAddFloor] = useState(false);
   const [newFloorId, setNewFloorId] = useState("");
   const [newFloorName, setNewFloorName] = useState("");
@@ -136,6 +188,21 @@ export default function MapEditor() {
   const addFloorInputRef = useRef<HTMLInputElement>(null);
 
   const floor = mapData.floors.find((f) => f.id === activeFloorId) ?? mapData.floors[0];
+
+  /** 亮出拉大缩小/旋转把手,并把"3 秒无操作自动隐藏"的倒计时重新掐表 */
+  function pingHandles() {
+    setHandlesVisible(true);
+    // 自增计数器只是为了让 effect 的依赖变化、重开倒计时,数值本身没有含义
+    setHandlesPingAt((n) => n + 1);
+  }
+
+  // handlesPingAt 每变一次,effect 先通过 cleanup 清掉上一个定时器再开新的,
+  // 保证任何时刻只有一个活着的倒计时,不会有"孤儿定时器"提前关灯
+  useEffect(() => {
+    if (!handlesPingAt) return;
+    const timer = setTimeout(() => setHandlesVisible(false), 3000);
+    return () => clearTimeout(timer);
+  }, [handlesPingAt]);
 
   function snapshotHistory() {
     setHistory((h) => [...h.slice(-49), mapData]);
@@ -245,6 +312,9 @@ export default function MapEditor() {
         if (!data.floors || !Array.isArray(data.floors) || data.floors.length === 0) {
           throw new Error("缺少 floors");
         }
+        // 兼容加画图功能之前导出的旧 JSON
+        data.drawings = data.drawings ?? [];
+        data.commonPlacements = data.commonPlacements ?? [];
         setMapData(data);
         setActiveFloorId(data.floors[0].id);
         setActiveOperatorId(Object.keys(data.operators ?? {})[0] ?? null);
@@ -287,7 +357,7 @@ export default function MapEditor() {
   /** 清空当前楼层所有标记(墙/洞口/文字/道具位),其他楼层不受影响。会先弹确认,清完还能 Ctrl+Z 撤销。 */
   function clearFloor() {
     const floorLabel = floor.name;
-    if (!window.confirm(`确定要清空「${floorLabel}」这一层的所有标记吗?(墙体/洞口/文字标注/道具位都会删掉,其他楼层不受影响)`)) {
+    if (!window.confirm(`确定要清空「${floorLabel}」这一层的所有标记吗?(墙体/洞口/文字标注/道具位/画笔笔迹都会删掉,其他楼层不受影响)`)) {
       return;
     }
     commit({
@@ -296,6 +366,7 @@ export default function MapEditor() {
       openings: mapData.openings.filter((o) => o.floor !== activeFloorId),
       textLabels: mapData.textLabels.filter((t) => t.floor !== activeFloorId),
       commonPlacements: mapData.commonPlacements.filter((p) => p.floor !== activeFloorId),
+      drawings: mapData.drawings.filter((d) => d.floor !== activeFloorId),
       operators: Object.fromEntries(
         Object.entries(mapData.operators).map(([opId, op]) => [
           opId,
@@ -304,6 +375,12 @@ export default function MapEditor() {
       ),
     });
     setSelection(null);
+  }
+
+  /** 只清掉当前楼层的画笔笔迹,不动墙/洞口/道具位那些正式标注 */
+  function clearFloorDrawings() {
+    if (!window.confirm(`确定要清空「${floor.name}」这一层的所有画笔笔迹吗?(其他标注不受影响)`)) return;
+    commit({ ...mapData, drawings: mapData.drawings.filter((d) => d.floor !== activeFloorId) });
   }
 
   useEffect(() => {
@@ -336,11 +413,12 @@ export default function MapEditor() {
     // 抑制 pointerdown 之后浏览器补发的兼容鼠标事件,从根上不让平移逻辑收到这次按下。
     e.preventDefault();
     snapshotHistory();
+    pingHandles();
     setDragTarget(target);
     setSelection(
       target.kind === "wall-endpoint" || target.kind === "wall-move"
         ? { kind: "wall", id: target.id }
-        : target.kind === "resize" || target.kind === "rotate"
+        : target.kind === "resize" || target.kind === "rotate" || target.kind === "rotateIcon"
         ? target.target
         : target.kind === "placement"
         ? { kind: "placement", operatorId: target.operatorId, id: target.id }
@@ -437,8 +515,8 @@ export default function MapEditor() {
         if (sel.kind === "textLabel") {
           return { ...md, textLabels: md.textLabels.map((t) => (t.id === sel.id ? { ...t, rotation: angle } : t)) };
         }
-        // 道具位(包括通用道具位)没有单独的 rotation 字段:直接复用已有的 facing(朝向),
-        // 拖旋转把手 = 转朝向,视野扇形/头像会跟着一起转。
+        // 道具位(包括通用道具位)没有单独的 rotation 字段:这个把手转的是已有的 facing
+        // (朝向),只管视野扇形指向哪,不影响图标自己的角度——图标自转是另一个把手。
         if (sel.kind === "commonPlacement") {
           return { ...md, commonPlacements: md.commonPlacements.map((p) => (p.id === sel.id ? { ...p, facing: angle } : p)) };
         }
@@ -453,6 +531,28 @@ export default function MapEditor() {
             },
           },
         };
+      }
+      if (target.kind === "rotateIcon") {
+        // 图标自转:只有道具位(含通用道具位)有独立图标能转,跟 facing/扇形是两回事
+        const angle = angleDeg(target.center, point);
+        const sel = target.target;
+        if (sel.kind === "commonPlacement") {
+          return { ...md, commonPlacements: md.commonPlacements.map((p) => (p.id === sel.id ? { ...p, iconRotation: angle } : p)) };
+        }
+        if (sel.kind === "placement") {
+          const op = md.operators[sel.operatorId];
+          return {
+            ...md,
+            operators: {
+              ...md.operators,
+              [sel.operatorId]: {
+                ...op,
+                placements: op.placements.map((p) => (p.id === sel.id ? { ...p, iconRotation: angle } : p)),
+              },
+            },
+          };
+        }
+        return md;
       }
       return { ...md, openings: md.openings.map((o) => (o.id === target.id ? { ...o, pos: point } : o)) };
     });
@@ -483,6 +583,7 @@ export default function MapEditor() {
   }
 
   function handlePointerDownImage(point: ImagePoint) {
+    pingHandles();
     if (tool === "select") return;
     if (tool === "wall") {
       setDraft({ kind: "wall", start: point, current: point });
@@ -518,12 +619,34 @@ export default function MapEditor() {
         return;
       }
       setDraft({ kind: "placement", start: point, current: point });
+    } else if (DRAW_TOOL_KIND[tool]) {
+      // 橡皮不走这里(删除挂在每条笔迹自己的 onPointerDown 上),其余画图工具开始记录轨迹
+      setDraft({ kind: "drawing", drawKind: DRAW_TOOL_KIND[tool]!, points: [point] });
     }
   }
 
+  /** 手绘轨迹抽稀的最小间距(底图像素):太密的点存下来没意义,还会让 JSON 膨胀 */
+  const PEN_MIN_DIST = 3;
+
   function handlePointerMoveImage(point: ImagePoint) {
-    setDraft((d) => (d ? { ...d, current: point } : d));
-    if (dragTarget) applyDragMove(point);
+    setDraft((d) => {
+      if (!d) return d;
+      if (d.kind === "drawing") {
+        if (d.drawKind === "pen" || d.drawKind === "highlighter") {
+          const last = d.points[d.points.length - 1];
+          if (dist(last, point) < PEN_MIN_DIST) return d;
+          return { ...d, points: [...d.points, point] };
+        }
+        // 两点式图形(直线/箭头/矩形/圆圈):固定起点,只更新终点
+        return { ...d, points: [d.points[0], point] };
+      }
+      return { ...d, current: point };
+    });
+    if (dragTarget) {
+      applyDragMove(point);
+      // 拖着旋转把手转的这段时间里持续续命,避免转太久(超过 3 秒)转到一半把手自己先隐身了
+      if (dragTarget.kind === "rotate" || dragTarget.kind === "rotateIcon") pingHandles();
+    }
   }
 
   function handlePointerUpImage(point: ImagePoint) {
@@ -533,6 +656,7 @@ export default function MapEditor() {
         const newWall: Wall = { id, floor: activeFloorId, points: [draft.start, point] };
         commit({ ...mapData, walls: [...mapData.walls, newWall] });
         setSelection({ kind: "wall", id });
+        pingHandles();
       }
       setDraft(null);
     }
@@ -564,7 +688,33 @@ export default function MapEditor() {
       // 想改标题/说明/截图这些细节,切到「选择」工具点它一下就行。
       setDraft(null);
     }
+    if (draft?.kind === "drawing") {
+      const pts = draft.points;
+      const isFreehand = draft.drawKind === "pen" || draft.drawKind === "highlighter";
+      const lastPoint = pts[pts.length - 1];
+      // 手绘至少要有两个点;两点式图形起终点距离太近视为误触,不落笔
+      const valid = isFreehand ? pts.length >= 2 : pts.length >= 2 && dist(pts[0], lastPoint) >= 5;
+      if (valid) {
+        const newDrawing: Drawing = {
+          id: genId("d"),
+          floor: activeFloorId,
+          kind: draft.drawKind,
+          points: pts,
+          color: drawColor,
+          width: drawWidth,
+        };
+        commit({ ...mapData, drawings: [...mapData.drawings, newDrawing] });
+      }
+      setDraft(null);
+    }
     if (dragTarget) setDragTarget(null);
+  }
+
+  /** 橡皮工具:点哪条笔迹删哪条,可撤销 */
+  function eraseDrawing(id: string, e: React.PointerEvent) {
+    e.stopPropagation();
+    e.preventDefault();
+    commit({ ...mapData, drawings: mapData.drawings.filter((d) => d.id !== id) });
   }
 
   /** 从干员头像网格选择:如果这个干员在当前地图里还没出现过,就用名单里的名字/头像自动注册一个 */
@@ -604,10 +754,12 @@ export default function MapEditor() {
   const openingsOnFloor = mapData.openings.filter((o) => o.floor === activeFloorId);
   const textLabelsOnFloor = mapData.textLabels.filter((t) => t.floor === activeFloorId);
   const commonPlacementsOnFloor = mapData.commonPlacements.filter((p) => p.floor === activeFloorId);
+  const drawingsOnFloor = mapData.drawings.filter((d) => d.floor === activeFloorId);
 
   /** 当前选中标记的中心点 + 当前 size/rotation,用来摆放拉大缩小/旋转把手。
-   * 道具位没有单独的 rotation 字段,直接读 facing(没设置过就当 0)。 */
-  function getSelectedResizeInfo(): { center: ImagePoint; size: number; rotation: number } | null {
+   * 道具位没有单独的 rotation 字段:rotation 这里读 facing(扇形朝向),
+   * iconRotation 是图标自己的角度,只有道具位/通用道具位才有意义。 */
+  function getSelectedResizeInfo(): { center: ImagePoint; size: number; rotation: number; iconRotation: number } | null {
     if (!selection) return null;
     if (selection.kind === "wall") {
       if (!selectedWall) return null;
@@ -616,24 +768,26 @@ export default function MapEditor() {
         center: { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 },
         size: selectedWall.size ?? 1,
         rotation: selectedWall.rotation ?? 0,
+        iconRotation: 0,
       };
     }
     if (selection.kind === "opening") {
       const o = openingsOnFloor.find((o) => o.id === selection.id);
-      return o ? { center: o.pos, size: o.size ?? 1, rotation: o.rotation ?? 0 } : null;
+      return o ? { center: o.pos, size: o.size ?? 1, rotation: o.rotation ?? 0, iconRotation: 0 } : null;
     }
     if (selection.kind === "textLabel") {
       const t = textLabelsOnFloor.find((t) => t.id === selection.id);
-      return t ? { center: t.pos, size: t.size ?? 1, rotation: t.rotation ?? 0 } : null;
+      return t ? { center: t.pos, size: t.size ?? 1, rotation: t.rotation ?? 0, iconRotation: 0 } : null;
     }
     if (selection.kind === "commonPlacement") {
       const p = commonPlacementsOnFloor.find((p) => p.id === selection.id);
-      return p ? { center: p.pos, size: p.size ?? 1, rotation: p.facing ?? 0 } : null;
+      return p ? { center: p.pos, size: p.size ?? 1, rotation: p.facing ?? 0, iconRotation: p.iconRotation ?? 0 } : null;
     }
     const p = mapData.operators[selection.operatorId]?.placements.find((p) => p.id === selection.id);
-    return p ? { center: p.pos, size: p.size ?? 1, rotation: p.facing ?? 0 } : null;
+    return p ? { center: p.pos, size: p.size ?? 1, rotation: p.facing ?? 0, iconRotation: p.iconRotation ?? 0 } : null;
   }
   const resizeInfo = getSelectedResizeInfo();
+  const canRotateIcon = selection?.kind === "placement" || selection?.kind === "commonPlacement";
 
   return (
     <div className="flex h-dvh flex-col bg-neutral-100 dark:bg-neutral-950">
@@ -814,6 +968,62 @@ export default function MapEditor() {
             </button>
           ))}
 
+          <p className="mt-3 border-t border-neutral-200 pt-3 text-xs text-neutral-500 dark:border-neutral-800">画图</p>
+          {DRAW_TOOLS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => {
+                setTool(t.id);
+                setDraft(null);
+                setSelection(null);
+              }}
+              className={[
+                "flex items-center gap-2 rounded px-2 py-1.5 text-left text-sm",
+                tool === t.id
+                  ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
+                  : "hover:bg-neutral-100 dark:hover:bg-neutral-800",
+              ].join(" ")}
+            >
+              {t.label}
+            </button>
+          ))}
+
+          <div className="mt-1 flex flex-wrap gap-1.5 px-1">
+            {DRAW_COLORS.map((c) => (
+              <button
+                key={c}
+                onClick={() => setDrawColor(c)}
+                aria-label={`画笔颜色 ${c}`}
+                className={[
+                  "h-5 w-5 rounded-full border-2",
+                  drawColor === c ? "border-neutral-900 dark:border-white" : "border-neutral-300 dark:border-neutral-600",
+                ].join(" ")}
+                style={{ background: c }}
+              />
+            ))}
+          </div>
+          <div className="mt-1 flex gap-1 px-1">
+            {DRAW_WIDTHS.map((w) => (
+              <button
+                key={w.value}
+                onClick={() => setDrawWidth(w.value)}
+                className={[
+                  "flex-1 rounded border px-1 py-0.5 text-xs",
+                  drawWidth === w.value
+                    ? "border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-neutral-900"
+                    : "border-neutral-300 text-neutral-600 dark:border-neutral-700 dark:text-neutral-300",
+                ].join(" ")}
+              >
+                {w.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={clearFloorDrawings}
+            className="mt-1 rounded border border-amber-300 px-2 py-1 text-xs text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950"
+          >
+            清空本层笔迹
+          </button>
 
           <p className="mt-4 text-xs leading-relaxed text-neutral-400">
             封墙:拖拽一下 = 一段墙。画完后选中它,拖两端的白色圆点手柄可以微调长度/角度,墙中点上的「墙」字徽章可以拖动整段墙平移,面板数(墙×N)在右侧面板里填。
@@ -824,7 +1034,9 @@ export default function MapEditor() {
             <br />
             道具位:先在右侧选干员再选道具,点一下放置,拖动可定朝向。
             <br />
-            选中任意标记后,图标旁会出现两个把手:白色的拉大缩小,蓝色虚线连着的是旋转,拖着转一圈就行。
+选中任意标记后,图标旁会出现把手:白色拉大缩小,蓝色是转朝向/视野扇形;道具位额外多一个橙色把手,单独转图标本身的角度,跟朝向互不影响。把手 3 秒不操作会自动淡出,再点一下图标或拖一下把手就会重新淡入。
+            <br />
+            画图:画笔/荧光笔按住拖动手绘;直线/箭头/矩形/圆圈按下拖到位松手;橡皮点哪条笔迹删哪条,都能 Ctrl+Z 撤销。
             <br />
             任意工具下,指针按在已有标记上都是直接选中并可拖动,不会重复叠加;点在空白处才会新建。
             <br />
@@ -840,70 +1052,97 @@ export default function MapEditor() {
             onPointerMoveImage={handlePointerMoveImage}
             onPointerUpImage={handlePointerUpImage}
           >
-            {textLabelsOnFloor.map((label) => (
-              <TextLabelMarker
-                key={label.id}
-                label={label}
-                scale={iconScale}
-                selected={selection?.kind === "textLabel" && selection.id === label.id}
-                onClick={() => setSelection({ kind: "textLabel", id: label.id })}
-                onPointerDown={(e) => startDrag({ kind: "textLabel", id: label.id }, e)}
-              />
-            ))}
+            {/* 手绘标注垫底。只有橡皮工具下才响应点击(点笔迹删除),平时不挡其他标记的交互 */}
+            <g style={{ pointerEvents: tool === "draw_eraser" ? "auto" : "none" }}>
+              {drawingsOnFloor.map((d) => (
+                <DrawingShape
+                  key={d.id}
+                  drawing={d}
+                  onErase={tool === "draw_eraser" ? (e) => eraseDrawing(d.id, e) : undefined}
+                />
+              ))}
+            </g>
 
-            {wallsOnFloor.map((wall) => (
-              <WallLine
-                key={wall.id}
-                wall={wall}
-                scale={iconScale}
-                selected={selection?.kind === "wall" && selection.id === wall.id}
-                onClick={() => setSelection({ kind: "wall", id: wall.id })}
-                onMovePointerDown={(e) => {
-                  const [p1, p2] = wall.points;
-                  const halfVector = { x: (p2.x - p1.x) / 2, y: (p2.y - p1.y) / 2 };
-                  startDrag({ kind: "wall-move", id: wall.id, halfVector }, e);
-                }}
-              />
-            ))}
+            {textLabelsOnFloor.map((label) => {
+              const isSelected = selection?.kind === "textLabel" && selection.id === label.id;
+              return (
+                <TextLabelMarker
+                  key={label.id}
+                  label={label}
+                  scale={iconScale}
+                  selected={isSelected}
+                  onClick={() => setSelection({ kind: "textLabel", id: label.id })}
+                  onPointerDown={(e) => startDrag({ kind: "textLabel", id: label.id }, e)}
+                />
+              );
+            })}
 
-            {openingsOnFloor.map((o) => (
-              <OpeningMarker
-                key={o.id}
-                opening={o}
-                scale={iconScale}
-                selected={selection?.kind === "opening" && selection.id === o.id}
-                onClick={() => setSelection({ kind: "opening", id: o.id })}
-                onPointerDown={(e) => startDrag({ kind: "opening", id: o.id }, e)}
-              />
-            ))}
+            {wallsOnFloor.map((wall) => {
+              const isSelected = selection?.kind === "wall" && selection.id === wall.id;
+              return (
+                <WallLine
+                  key={wall.id}
+                  wall={wall}
+                  scale={iconScale}
+                  selected={isSelected}
+                  onClick={() => setSelection({ kind: "wall", id: wall.id })}
+                  onMovePointerDown={(e) => {
+                    const [p1, p2] = wall.points;
+                    const halfVector = { x: (p2.x - p1.x) / 2, y: (p2.y - p1.y) / 2 };
+                    startDrag({ kind: "wall-move", id: wall.id, halfVector }, e);
+                  }}
+                />
+              );
+            })}
 
-            {commonPlacementsOnFloor.map((p) => (
-              <PlacementMarker
-                key={p.id}
-                placement={p}
-                color={COMMON_GADGET_COLOR}
-                scale={iconScale}
-                selected={selection?.kind === "commonPlacement" && selection.id === p.id}
-                onClick={() => setSelection({ kind: "commonPlacement", id: p.id })}
-                onPointerDown={(e) => startDrag({ kind: "commonPlacement", id: p.id }, e)}
-              />
-            ))}
+            {openingsOnFloor.map((o) => {
+              const isSelected = selection?.kind === "opening" && selection.id === o.id;
+              return (
+                <OpeningMarker
+                  key={o.id}
+                  opening={o}
+                  scale={iconScale}
+                  selected={isSelected}
+                  onClick={() => setSelection({ kind: "opening", id: o.id })}
+                  onPointerDown={(e) => startDrag({ kind: "opening", id: o.id }, e)}
+                />
+              );
+            })}
+
+            {commonPlacementsOnFloor.map((p) => {
+              const isSelected = selection?.kind === "commonPlacement" && selection.id === p.id;
+              return (
+                <PlacementMarker
+                  key={p.id}
+                  placement={p}
+                  color={COMMON_GADGET_COLOR}
+                  icon={getCommonGadgetIcon(p.gadgetId)}
+                  scale={iconScale}
+                  selected={isSelected}
+                  onClick={() => setSelection({ kind: "commonPlacement", id: p.id })}
+                  onPointerDown={(e) => startDrag({ kind: "commonPlacement", id: p.id }, e)}
+                />
+              );
+            })}
 
             {Object.entries(mapData.operators).flatMap(([opId, op]) =>
               op.placements
                 .filter((p) => p.floor === activeFloorId)
-                .map((p) => (
-                  <PlacementMarker
-                    key={p.id}
-                    placement={p}
-                    color={getOperatorColor(opId)}
-                    icon={op.icon}
-                    scale={iconScale}
-                    selected={selection?.kind === "placement" && selection.id === p.id}
-                    onClick={() => setSelection({ kind: "placement", operatorId: opId, id: p.id })}
-                    onPointerDown={(e) => startDrag({ kind: "placement", operatorId: opId, id: p.id }, e)}
-                  />
-                ))
+                .map((p) => {
+                  const isSelected = selection?.kind === "placement" && selection.id === p.id;
+                  return (
+                    <PlacementMarker
+                      key={p.id}
+                      placement={p}
+                      color={getOperatorColor(opId)}
+                      icon={op.icon}
+                      scale={iconScale}
+                      selected={isSelected}
+                      onClick={() => setSelection({ kind: "placement", operatorId: opId, id: p.id })}
+                      onPointerDown={(e) => startDrag({ kind: "placement", operatorId: opId, id: p.id }, e)}
+                    />
+                  );
+                })
             )}
 
             {selectedWall && (
@@ -943,7 +1182,12 @@ export default function MapEditor() {
                   fill="#fff"
                   stroke="#111"
                   strokeWidth={2}
-                  style={{ cursor: "nwse-resize" }}
+                  style={{
+                    cursor: "nwse-resize",
+                    opacity: handlesVisible ? 1 : 0,
+                    pointerEvents: handlesVisible ? "auto" : "none",
+                    transition: "opacity 0.4s ease",
+                  }}
                   onPointerDown={(e) => startDrag({ kind: "resize", target: selection, center: resizeInfo.center }, e)}
                 />
               );
@@ -955,7 +1199,13 @@ export default function MapEditor() {
               const rx = resizeInfo.center.x + handleDist * Math.cos(rad);
               const ry = resizeInfo.center.y + handleDist * Math.sin(rad);
               return (
-                <>
+                <g
+                  style={{
+                    opacity: handlesVisible ? 1 : 0,
+                    pointerEvents: handlesVisible ? "auto" : "none",
+                    transition: "opacity 0.4s ease",
+                  }}
+                >
                   <line
                     x1={resizeInfo.center.x}
                     y1={resizeInfo.center.y}
@@ -975,7 +1225,44 @@ export default function MapEditor() {
                     style={{ cursor: "grab" }}
                     onPointerDown={(e) => startDrag({ kind: "rotate", target: selection, center: resizeInfo.center }, e)}
                   />
-                </>
+                </g>
+              );
+            })()}
+
+            {/* 图标自转把手:只有道具位/通用道具位有独立图标能转,跟上面的朝向/扇形把手是两个独立操作 */}
+            {selection && resizeInfo && canRotateIcon && (() => {
+              const rad = (resizeInfo.iconRotation * Math.PI) / 180;
+              const handleDist = ICON_ROTATE_HANDLE_DIST * iconScale;
+              const rx = resizeInfo.center.x + handleDist * Math.cos(rad);
+              const ry = resizeInfo.center.y + handleDist * Math.sin(rad);
+              return (
+                <g
+                  style={{
+                    opacity: handlesVisible ? 1 : 0,
+                    pointerEvents: handlesVisible ? "auto" : "none",
+                    transition: "opacity 0.4s ease",
+                  }}
+                >
+                  <line
+                    x1={resizeInfo.center.x}
+                    y1={resizeInfo.center.y}
+                    x2={rx}
+                    y2={ry}
+                    stroke="#f59e0b"
+                    strokeWidth={2}
+                    strokeDasharray="2 3"
+                  />
+                  <circle
+                    cx={rx}
+                    cy={ry}
+                    r={6 * iconScale}
+                    fill="#f59e0b"
+                    stroke="#111"
+                    strokeWidth={2}
+                    style={{ cursor: "grab" }}
+                    onPointerDown={(e) => startDrag({ kind: "rotateIcon", target: selection, center: resizeInfo.center }, e)}
+                  />
+                </g>
               );
             })()}
 
@@ -1004,6 +1291,21 @@ export default function MapEditor() {
                 />
                 <circle cx={draft.start.x} cy={draft.start.y} r={16} fill="#16a34a" stroke="#fff" strokeWidth={3} opacity={0.7} />
               </>
+            )}
+            {/* 画图实时预览:复用正式渲染组件,画完落笔后跟成品长得一模一样 */}
+            {draft?.kind === "drawing" && draft.points.length >= 2 && (
+              <g style={{ pointerEvents: "none" }}>
+                <DrawingShape
+                  drawing={{
+                    id: "draft",
+                    floor: activeFloorId,
+                    kind: draft.drawKind,
+                    points: draft.points,
+                    color: drawColor,
+                    width: drawWidth,
+                  }}
+                />
+              </g>
             )}
           </MapStage>
         </main>
@@ -1102,7 +1404,7 @@ export default function MapEditor() {
 
             {/* 通用道具不挂在任何干员名下,跟洞口一样是独立标记:点了直接能在地图上放,
                 不需要先选干员。点这里会顺便清掉当前选中的干员,避免误挂到某个干员名下。 */}
-            <p className="text-xs text-neutral-500">通用道具(不挂靠干员,选了直接能放)</p>
+            <p className="text-xs text-neutral-500">通用道具</p>
             <div className="flex flex-wrap gap-1.5">
               {(operatorRoleTab === "attack" ? COMMON_GADGETS_ATTACK : COMMON_GADGETS_DEFEND).map((g) => (
                 <button
@@ -1119,43 +1421,14 @@ export default function MapEditor() {
                       : "border-neutral-300 text-neutral-600 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800",
                   ].join(" ")}
                 >
-                  {/* 通用道具还没有专门图标,先用个圆点占位,以后有图了直接换成 <img> */}
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-60" />
+                  <GadgetChipIcon icon={g.icon} />
                   {g.name}
                 </button>
               ))}
             </div>
 
-            <details className="text-xs">
-              <summary className="cursor-pointer text-neutral-500">名单没有的干员?手动加一个</summary>
-                <div className="mt-1 space-y-1">
-                  <input
-                    value={newOperatorId}
-                    onChange={(e) => setNewOperatorId(e.target.value)}
-                    placeholder="干员 id,如 sledge"
-                    className="w-full rounded border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700 dark:bg-neutral-800"
-                  />
-                  <input
-                    value={newOperatorName}
-                    onChange={(e) => setNewOperatorName(e.target.value)}
-                    placeholder="显示名,如 Sledge"
-                    className="w-full rounded border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700 dark:bg-neutral-800"
-                  />
-                  <button
-                    onClick={addOperator}
-                    className="w-full rounded border border-neutral-300 py-1 text-xs hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
-                  >
-                    + 添加
-                  </button>
-                </div>
-              </details>
           </div>
 
-          {!selection && (
-            <p className="text-sm text-neutral-400">
-              上方选干员可直接在地图上放置道具位;左侧还有封墙/洞口/文字标注等工具,或切到「选择」模式点击已有标记查看/编辑。
-            </p>
-          )}
           {selection?.kind === "wall" && selectedWall && (
             <WallPanel wall={selectedWall} onPatch={(p) => patch((md) => ({ ...md, walls: md.walls.map((w) => (w.id === selectedWall.id ? { ...w, ...p } : w)) }))} onDelete={deleteSelection} />
           )}
@@ -1229,6 +1502,16 @@ export default function MapEditor() {
       </div>
     </div>
   );
+}
+
+/** 通用道具 chip 前面的小图标:有 icon 就显示图,加载失败或没配 icon 就退化成占位圆点 */
+function GadgetChipIcon({ icon }: { icon?: string }) {
+  const [errored, setErrored] = useState(false);
+  if (icon && !errored) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={icon} alt="" onError={() => setErrored(true)} className="h-4 w-4 shrink-0 rounded-sm object-cover" />;
+  }
+  return <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-60" />;
 }
 
 function WallPanel({

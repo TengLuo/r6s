@@ -95,6 +95,31 @@ export interface Placement {
   gadgetId?: string;
   /** 标记点的单独缩放倍数,省略视为 1 */
   size?: number;
+  /**
+   * 图标本身的旋转角度,单位度,独立于 facing。facing 只管视野扇形指向哪,
+   * iconRotation 只管头像/道具图标图片本身转到哪个角度,两者互不影响。
+   */
+  iconRotation?: number;
+}
+
+/**
+ * 手绘标注的种类:
+ * - pen 画笔:自由手绘,用 perfect-freehand 渲染成带笔锋的漂亮笔迹
+ * - highlighter 荧光笔:半透明粗线,涂区域不遮底图
+ * - line 直线 / arrow 箭头:两点式,标对枪线/进攻方向
+ * - rect 矩形 / ellipse 圆圈:两点式(对角),圈重点区域
+ */
+export type DrawingKind = "pen" | "highlighter" | "line" | "arrow" | "rect" | "ellipse";
+
+export interface Drawing {
+  id: string;
+  floor: string;
+  kind: DrawingKind;
+  /** pen/highlighter 是抽稀后的轨迹点;line/arrow/rect/ellipse 只有 [起点, 终点] 两个点 */
+  points: Point[];
+  color: string;
+  /** 笔画基准粗细,底图像素单位 */
+  width: number;
 }
 
 export interface OperatorData {
@@ -125,6 +150,8 @@ export interface MapData {
    * 跟 openings 一样是独立于干员的标记,不需要先选干员才能标注。
    */
   commonPlacements: Placement[];
+  /** 手绘标注(画笔/荧光笔/直线/箭头/矩形/圆圈),per 楼层,随导出导入走 */
+  drawings: Drawing[];
   presets: Preset[];
 }
 
