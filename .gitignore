@@ -42,3 +42,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Upscayl 原始输出(单个 100MB+,GitHub 拒收),处理压缩后才以正式文件名入库
+public/maps/**/*upscayl*

@@ -3,7 +3,7 @@ import { OPENING_PURPOSE_COLOR, OPENING_PURPOSE_GLYPH } from "@/lib/schema";
 import type { Drawing, Opening, Placement, TextLabel, Wall } from "@/lib/schema";
 
 /** 封墙统一用一个颜色,不再分必封/禁封/情况三态 */
-export const WALL_COLOR = "#dc2626";
+export const WALL_COLOR = "#eab308";
 
 export const OPERATOR_COLOR: Record<string, string> = {
   mira: "#ec4899",

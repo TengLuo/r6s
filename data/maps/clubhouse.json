@@ -4,12 +4,12 @@
     "note": "底图为用户从育碧官网下载的真实地图蓝图,战术标注待用 /editor 编辑器实际标注后填入。"
   },
   "id": "clubhouse",
-  "name": "会所 Clubhouse",
+  "name": "俱乐部 Clubhouse",
   "floors": [
     {
       "id": "b1",
       "name": "地下室",
-      "image": "/maps/clubhouse/b1.jpg",
+      "image": "/maps/clubhouse/b1.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -18,7 +18,7 @@
     {
       "id": "1f",
       "name": "1F",
-      "image": "/maps/clubhouse/1f.jpg",
+      "image": "/maps/clubhouse/1f.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -27,7 +27,7 @@
     {
       "id": "2f",
       "name": "2F",
-      "image": "/maps/clubhouse/2f.jpg",
+      "image": "/maps/clubhouse/2f.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -36,7 +36,7 @@
     {
       "id": "roof",
       "name": "屋顶",
-      "image": "/maps/clubhouse/roof.jpg",
+      "image": "/maps/clubhouse/roof.png",
       "imageSize": {
         "width": 1600,
         "height": 900
