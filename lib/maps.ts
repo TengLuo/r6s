@@ -16,7 +16,6 @@ import kanal from "@/data/maps/kanal.json";
 import emeraldPlains from "@/data/maps/emerald-plains.json";
 import outback from "@/data/maps/outback.json";
 import skyscraper from "@/data/maps/skyscraper.json";
-import closeQuarter from "@/data/maps/close-quarter.json";
 import favela from "@/data/maps/favela.json";
 import fortress from "@/data/maps/fortress.json";
 import herefordBase from "@/data/maps/hereford-base.json";
@@ -50,7 +49,6 @@ export const MAPS: Record<string, MapData> = {
 /** 不在当前排位池里的地图(退环境/竞技赛专用/测试图等),单独一份名单,
  * 首页会分成两个区块展示,不跟排位地图的统计数字混在一起。 */
 export const OTHER_MAPS: Record<string, MapData> = {
-  "close-quarter": closeQuarter as unknown as MapData,
   favela: favela as unknown as MapData,
   "hereford-base": herefordBase as unknown as MapData,
   house: house as unknown as MapData,
