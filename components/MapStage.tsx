@@ -26,6 +26,10 @@ interface MapStageProps {
   onPointerDownImage?: PointerHandler;
   onPointerMoveImage?: PointerHandler;
   onPointerUpImage?: PointerHandler;
+  /** 每次缩放/平移变换后回调当前缩放倍数,供上层反向补偿墙线/图标/字体的视觉大小 */
+  onScaleChange?: (scale: number) => void;
+  /** 右键单击地图(阻止浏览器默认菜单后触发),常用于"取消当前工具,回到选择/拖动" */
+  onContextMenu?: (e: React.MouseEvent) => void;
 }
 
 /**
@@ -39,7 +43,7 @@ interface MapStageProps {
  * 完全不用自己手动追踪当前缩放倍数/平移量。
  */
 const MapStage = forwardRef<MapStageHandle, MapStageProps>(function MapStage(
-  { floor, children, panningDisabled, onPointerDownImage, onPointerMoveImage, onPointerUpImage },
+  { floor, children, panningDisabled, onPointerDownImage, onPointerMoveImage, onPointerUpImage, onScaleChange, onContextMenu },
   ref
 ) {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -79,9 +83,11 @@ const MapStage = forwardRef<MapStageHandle, MapStageProps>(function MapStage(
 
   useImperativeHandle(ref, () => ({ toImagePoint }), []);
 
-  const wrap = (handler?: PointerHandler) =>
+  const wrap = (handler?: PointerHandler, primaryOnly?: boolean) =>
     handler
       ? (e: React.PointerEvent<SVGSVGElement>) => {
+          // 右键(button 2)不当画图/放置操作处理,只用来弹出 onContextMenu 取消当前工具
+          if (primaryOnly && e.button !== 0) return;
           const point = toImagePoint(e.clientX, e.clientY);
           if (point) handler(point, e);
         }
@@ -97,6 +103,7 @@ const MapStage = forwardRef<MapStageHandle, MapStageProps>(function MapStage(
       doubleClick={{ mode: "toggle" }}
       panning={{ disabled: panningDisabled }}
       wheel={{ step: 0.0015 }}
+      onTransform={(_ref, state) => onScaleChange?.(state.scale)}
     >
       <TransformComponent
         wrapperStyle={{ width: "100%", height: "100%" }}
@@ -118,9 +125,14 @@ const MapStage = forwardRef<MapStageHandle, MapStageProps>(function MapStage(
             width={width}
             height={height}
             style={{ position: "absolute", inset: 0, touchAction: panningDisabled ? "none" : undefined }}
-            onPointerDown={wrap(onPointerDownImage)}
+            onPointerDown={wrap(onPointerDownImage, true)}
             onPointerMove={wrap(onPointerMoveImage)}
             onPointerUp={wrap(onPointerUpImage)}
+            onContextMenu={(e) => {
+              if (!onContextMenu) return;
+              e.preventDefault();
+              onContextMenu(e);
+            }}
           >
             {children}
           </svg>

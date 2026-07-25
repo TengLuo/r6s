@@ -177,7 +177,12 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
   const [handlesPingAt, setHandlesPingAt] = useState(0);
   const [history, setHistory] = useState<MapData[]>([]);
   const [imagePathHints, setImagePathHints] = useState<Record<string, string>>({});
-  const [iconScale, setIconScale] = useState(1);
+  const [iconScale, setIconScale] = useState(1.5);
+  // 画面缩放倍数(react-zoom-pan-pinch 的实时 scale),用来反向补偿图标/字体,
+  // 让它们的视觉大小保持恒定,不随画面放大缩小而变大变小(墙线本身不用这个,
+  // 墙线要的是相反效果——跟着画面自然放大变粗、缩小变细,见 WallLine 的 strokeWidth)
+  const [viewScale, setViewScale] = useState(1);
+  const markerScale = iconScale / viewScale;
   const [drawColor, setDrawColor] = useState(DRAW_COLORS[0]);
   const [drawWidth, setDrawWidth] = useState(DRAW_WIDTHS[1].value);
   const [showAddFloor, setShowAddFloor] = useState(false);
@@ -477,7 +482,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
       }
       if (target.kind === "resize") {
         const d = dist(target.center, point);
-        const newSize = Math.min(3, Math.max(0.4, d / (RESIZE_HANDLE_BASE_DIST * iconScale)));
+        const newSize = Math.min(3, Math.max(0.4, d / (RESIZE_HANDLE_BASE_DIST * markerScale)));
         const sel = target.target;
         if (sel.kind === "wall") {
           return { ...md, walls: md.walls.map((w) => (w.id === sel.id ? { ...w, size: newSize } : w)) };
@@ -1025,7 +1030,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
             <br />
             任意工具下,指针按在已有标记上都是直接选中并可拖动,不会重复叠加;点在空白处才会新建。
             <br />
-            快捷键:Esc 取消 · Delete 删除 · Ctrl+Z 撤销
+            快捷键:Esc / 鼠标右键 取消并切回选择 · Delete 删除 · Ctrl+Z 撤销
           </p>
         </aside>
 
@@ -1036,6 +1041,11 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
             onPointerDownImage={handlePointerDownImage}
             onPointerMoveImage={handlePointerMoveImage}
             onPointerUpImage={handlePointerUpImage}
+            onScaleChange={setViewScale}
+            onContextMenu={() => {
+              setTool("select");
+              setDraft(null);
+            }}
           >
             {/* 手绘标注垫底。只有橡皮工具下才响应点击(点笔迹删除),平时不挡其他标记的交互 */}
             <g style={{ pointerEvents: tool === "draw_eraser" ? "auto" : "none" }}>
@@ -1054,7 +1064,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
                 <TextLabelMarker
                   key={label.id}
                   label={label}
-                  scale={iconScale}
+                  scale={markerScale}
                   selected={isSelected}
                   onClick={() => setSelection({ kind: "textLabel", id: label.id })}
                   onPointerDown={(e) => startDrag({ kind: "textLabel", id: label.id }, e)}
@@ -1068,7 +1078,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
                 <WallLine
                   key={wall.id}
                   wall={wall}
-                  scale={iconScale}
+                  scale={markerScale}
                   selected={isSelected}
                   onClick={() => setSelection({ kind: "wall", id: wall.id })}
                   onMovePointerDown={(e) => {
@@ -1086,7 +1096,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
                 <OpeningMarker
                   key={o.id}
                   opening={o}
-                  scale={iconScale}
+                  scale={markerScale}
                   selected={isSelected}
                   onClick={() => setSelection({ kind: "opening", id: o.id })}
                   onPointerDown={(e) => startDrag({ kind: "opening", id: o.id }, e)}
@@ -1102,7 +1112,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
                   placement={p}
                   color={COMMON_GADGET_COLOR}
                   icon={getCommonGadgetIcon(p.gadgetId)}
-                  scale={iconScale}
+                  scale={markerScale}
                   selected={isSelected}
                   onClick={() => setSelection({ kind: "commonPlacement", id: p.id })}
                   onPointerDown={(e) => startDrag({ kind: "commonPlacement", id: p.id }, e)}
@@ -1121,7 +1131,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
                       placement={p}
                       color={getOperatorColor(opId)}
                       icon={op.icon}
-                      scale={iconScale}
+                      scale={markerScale}
                       selected={isSelected}
                       onClick={() => setSelection({ kind: "placement", operatorId: opId, id: p.id })}
                       onPointerDown={(e) => startDrag({ kind: "placement", operatorId: opId, id: p.id }, e)}
@@ -1135,7 +1145,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
                 <circle
                   cx={selectedWall.points[0].x}
                   cy={selectedWall.points[0].y}
-                  r={9 * iconScale}
+                  r={9 * markerScale}
                   fill="#fff"
                   stroke="#111"
                   strokeWidth={2}
@@ -1145,7 +1155,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
                 <circle
                   cx={selectedWall.points[1].x}
                   cy={selectedWall.points[1].y}
-                  r={9 * iconScale}
+                  r={9 * markerScale}
                   fill="#fff"
                   stroke="#111"
                   strokeWidth={2}
@@ -1156,14 +1166,14 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
             )}
 
             {selection && resizeInfo && (() => {
-              const handleDist = RESIZE_HANDLE_BASE_DIST * resizeInfo.size * iconScale;
+              const handleDist = RESIZE_HANDLE_BASE_DIST * resizeInfo.size * markerScale;
               const hx = resizeInfo.center.x + handleDist * 0.7071;
               const hy = resizeInfo.center.y + handleDist * 0.7071;
               return (
                 <circle
                   cx={hx}
                   cy={hy}
-                  r={7 * iconScale}
+                  r={7 * markerScale}
                   fill="#fff"
                   stroke="#111"
                   strokeWidth={2}
@@ -1180,7 +1190,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
 
             {selection && resizeInfo && (() => {
               const rad = (resizeInfo.rotation * Math.PI) / 180;
-              const handleDist = ROTATE_HANDLE_DIST * iconScale;
+              const handleDist = ROTATE_HANDLE_DIST * markerScale;
               const rx = resizeInfo.center.x + handleDist * Math.cos(rad);
               const ry = resizeInfo.center.y + handleDist * Math.sin(rad);
               return (
@@ -1203,7 +1213,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
                   <circle
                     cx={rx}
                     cy={ry}
-                    r={7 * iconScale}
+                    r={7 * markerScale}
                     fill="#60a5fa"
                     stroke="#111"
                     strokeWidth={2}
@@ -1217,7 +1227,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
             {/* 图标自转把手:只有道具位/通用道具位有独立图标能转,跟上面的朝向/扇形把手是两个独立操作 */}
             {selection && resizeInfo && canRotateIcon && (() => {
               const rad = (resizeInfo.iconRotation * Math.PI) / 180;
-              const handleDist = ICON_ROTATE_HANDLE_DIST * iconScale;
+              const handleDist = ICON_ROTATE_HANDLE_DIST * markerScale;
               const rx = resizeInfo.center.x + handleDist * Math.cos(rad);
               const ry = resizeInfo.center.y + handleDist * Math.sin(rad);
               return (
@@ -1240,7 +1250,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
                   <circle
                     cx={rx}
                     cy={ry}
-                    r={6 * iconScale}
+                    r={6 * markerScale}
                     fill="#f59e0b"
                     stroke="#111"
                     strokeWidth={2}
