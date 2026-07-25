@@ -150,8 +150,10 @@ function blankMapData(id: string, name: string, floor: Floor): MapData {
 
 const REGISTRY_MAP_IDS = Object.keys(ALL_MAPS);
 
-export default function MapEditor() {
-  const [mapData, setMapData] = useState<MapData>(() => structuredClone(MAPS["border"]));
+export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
+  const [mapData, setMapData] = useState<MapData>(() =>
+    structuredClone((initialMapId && ALL_MAPS[initialMapId]) || MAPS["border"])
+  );
   const [activeFloorId, setActiveFloorId] = useState(mapData.floors[0].id);
   const [tool, setTool] = useState<Tool>("select");
   const [activeOperatorId, setActiveOperatorId] = useState<string | null>(

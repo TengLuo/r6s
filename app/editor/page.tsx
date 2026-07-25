@@ -5,6 +5,11 @@ export const metadata: Metadata = {
   title: "地图标注编辑器 · R6 装修攻略",
 };
 
-export default function EditorPage() {
-  return <MapEditor />;
+export default async function EditorPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ map?: string }>;
+}) {
+  const { map } = await searchParams;
+  return <MapEditor initialMapId={map} />;
 }

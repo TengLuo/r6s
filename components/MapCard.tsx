@@ -13,7 +13,7 @@ export default function MapCard({ map, index, annotated }: MapCardProps) {
 
   return (
     <Link
-      href={`/map/${map.id}`}
+      href={`/editor?map=${map.id}`}
       className="group relative block overflow-hidden rounded-lg border border-white/10 bg-neutral-900 transition-colors hover:border-red-500/60"
     >
       <span className="pointer-events-none absolute left-2 top-2 z-10 font-mono text-6xl font-black leading-none text-white/[0.06] transition-colors group-hover:text-red-500/10">
