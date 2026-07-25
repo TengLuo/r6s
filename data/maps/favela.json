@@ -9,7 +9,7 @@
     {
       "id": "b1",
       "name": "地下室",
-      "image": "/maps/favela/b1.jpg",
+      "image": "/maps/favela/b1.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -18,7 +18,7 @@
     {
       "id": "1f",
       "name": "1F",
-      "image": "/maps/favela/1f.jpg",
+      "image": "/maps/favela/1f.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -27,7 +27,7 @@
     {
       "id": "2f",
       "name": "2F",
-      "image": "/maps/favela/2f.jpg",
+      "image": "/maps/favela/2f.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -36,7 +36,7 @@
     {
       "id": "3f",
       "name": "3F",
-      "image": "/maps/favela/3f.jpg",
+      "image": "/maps/favela/3f.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -45,7 +45,7 @@
     {
       "id": "roof",
       "name": "屋顶",
-      "image": "/maps/favela/roof.jpg",
+      "image": "/maps/favela/roof.png",
       "imageSize": {
         "width": 1600,
         "height": 900

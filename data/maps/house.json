@@ -9,7 +9,7 @@
     {
       "id": "b1",
       "name": "地下室",
-      "image": "/maps/house/b1.jpg",
+      "image": "/maps/house/b1.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -18,7 +18,7 @@
     {
       "id": "1f",
       "name": "1F",
-      "image": "/maps/house/1f.jpg",
+      "image": "/maps/house/1f.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -27,7 +27,7 @@
     {
       "id": "2f",
       "name": "2F",
-      "image": "/maps/house/2f.jpg",
+      "image": "/maps/house/2f.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -36,7 +36,7 @@
     {
       "id": "roof",
       "name": "屋顶(阁楼)",
-      "image": "/maps/house/roof.jpg",
+      "image": "/maps/house/roof.png",
       "imageSize": {
         "width": 1600,
         "height": 900

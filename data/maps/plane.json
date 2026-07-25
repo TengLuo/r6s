@@ -9,7 +9,7 @@
     {
       "id": "1f",
       "name": "1F",
-      "image": "/maps/plane/1f.jpg",
+      "image": "/maps/plane/1f.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -18,7 +18,7 @@
     {
       "id": "2f",
       "name": "2F",
-      "image": "/maps/plane/2f.jpg",
+      "image": "/maps/plane/2f.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -27,7 +27,7 @@
     {
       "id": "3f",
       "name": "3F",
-      "image": "/maps/plane/3f.jpg",
+      "image": "/maps/plane/3f.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -36,7 +36,7 @@
     {
       "id": "roof",
       "name": "鸟瞰",
-      "image": "/maps/plane/roof.jpg",
+      "image": "/maps/plane/roof.png",
       "imageSize": {
         "width": 1600,
         "height": 900

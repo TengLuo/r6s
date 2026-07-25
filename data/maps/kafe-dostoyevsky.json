@@ -9,7 +9,7 @@
     {
       "id": "1f",
       "name": "1F",
-      "image": "/maps/kafe-dostoyevsky/1f.jpg",
+      "image": "/maps/kafe-dostoyevsky/1f.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -18,7 +18,7 @@
     {
       "id": "2f",
       "name": "2F",
-      "image": "/maps/kafe-dostoyevsky/2f.jpg",
+      "image": "/maps/kafe-dostoyevsky/2f.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -27,7 +27,7 @@
     {
       "id": "3f",
       "name": "3F",
-      "image": "/maps/kafe-dostoyevsky/3f.jpg",
+      "image": "/maps/kafe-dostoyevsky/3f.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -36,7 +36,7 @@
     {
       "id": "roof",
       "name": "屋顶",
-      "image": "/maps/kafe-dostoyevsky/roof.jpg",
+      "image": "/maps/kafe-dostoyevsky/roof.png",
       "imageSize": {
         "width": 1600,
         "height": 900

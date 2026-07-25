@@ -9,7 +9,7 @@
     {
       "id": "1f",
       "name": "1F",
-      "image": "/maps/theme-park/1f.jpg",
+      "image": "/maps/theme-park/1f.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -18,7 +18,7 @@
     {
       "id": "2f",
       "name": "2F",
-      "image": "/maps/theme-park/2f.jpg",
+      "image": "/maps/theme-park/2f.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -27,7 +27,7 @@
     {
       "id": "roof",
       "name": "屋顶",
-      "image": "/maps/theme-park/roof.jpg",
+      "image": "/maps/theme-park/roof.png",
       "imageSize": {
         "width": 1600,
         "height": 900

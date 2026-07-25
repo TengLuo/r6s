@@ -9,7 +9,7 @@
     {
       "id": "1f",
       "name": "1F",
-      "image": "/maps/tower/1f.jpg",
+      "image": "/maps/tower/1f.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -18,7 +18,7 @@
     {
       "id": "2f",
       "name": "2F",
-      "image": "/maps/tower/2f.jpg",
+      "image": "/maps/tower/2f.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -27,7 +27,7 @@
     {
       "id": "roof",
       "name": "屋顶",
-      "image": "/maps/tower/roof.jpg",
+      "image": "/maps/tower/roof.png",
       "imageSize": {
         "width": 1600,
         "height": 900

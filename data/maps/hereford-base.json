@@ -9,7 +9,7 @@
     {
       "id": "b1",
       "name": "地下室",
-      "image": "/maps/hereford-base/b1.jpg",
+      "image": "/maps/hereford-base/b1.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -18,7 +18,7 @@
     {
       "id": "1f",
       "name": "1F",
-      "image": "/maps/hereford-base/1f.jpg",
+      "image": "/maps/hereford-base/1f.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -27,7 +27,7 @@
     {
       "id": "2f",
       "name": "2F",
-      "image": "/maps/hereford-base/2f.jpg",
+      "image": "/maps/hereford-base/2f.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -36,7 +36,7 @@
     {
       "id": "3f",
       "name": "3F",
-      "image": "/maps/hereford-base/3f.jpg",
+      "image": "/maps/hereford-base/3f.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -45,7 +45,7 @@
     {
       "id": "roof",
       "name": "屋顶",
-      "image": "/maps/hereford-base/roof.jpg",
+      "image": "/maps/hereford-base/roof.png",
       "imageSize": {
         "width": 1600,
         "height": 900

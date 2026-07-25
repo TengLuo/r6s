@@ -4,12 +4,12 @@
     "note": "底图为用户从育碧官网下载的真实地图蓝图,战术标注待用 /editor 编辑器实际标注后填入。"
   },
   "id": "lair",
-  "name": "巢穴 Lair",
+  "name": "虎穴狼巢 Lair",
   "floors": [
     {
       "id": "b1",
       "name": "地下室",
-      "image": "/maps/lair/b1.jpg",
+      "image": "/maps/lair/b1.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -18,7 +18,7 @@
     {
       "id": "1f",
       "name": "1F",
-      "image": "/maps/lair/1f.jpg",
+      "image": "/maps/lair/1f.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -27,7 +27,7 @@
     {
       "id": "2f",
       "name": "2F",
-      "image": "/maps/lair/2f.jpg",
+      "image": "/maps/lair/2f.png",
       "imageSize": {
         "width": 1600,
         "height": 900
@@ -36,7 +36,7 @@
     {
       "id": "roof",
       "name": "屋顶",
-      "image": "/maps/lair/roof.jpg",
+      "image": "/maps/lair/roof.png",
       "imageSize": {
         "width": 1600,
         "height": 900
