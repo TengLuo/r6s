@@ -26,8 +26,6 @@ interface MapStageProps {
   onPointerDownImage?: PointerHandler;
   onPointerMoveImage?: PointerHandler;
   onPointerUpImage?: PointerHandler;
-  /** 每次缩放/平移变换后回调当前缩放倍数,供上层反向补偿墙线/图标/字体的视觉大小 */
-  onScaleChange?: (scale: number) => void;
   /** 右键单击地图(阻止浏览器默认菜单后触发),常用于"取消当前工具,回到选择/拖动" */
   onContextMenu?: (e: React.MouseEvent) => void;
 }
@@ -43,7 +41,7 @@ interface MapStageProps {
  * 完全不用自己手动追踪当前缩放倍数/平移量。
  */
 const MapStage = forwardRef<MapStageHandle, MapStageProps>(function MapStage(
-  { floor, children, panningDisabled, onPointerDownImage, onPointerMoveImage, onPointerUpImage, onScaleChange, onContextMenu },
+  { floor, children, panningDisabled, onPointerDownImage, onPointerMoveImage, onPointerUpImage, onContextMenu },
   ref
 ) {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -103,7 +101,6 @@ const MapStage = forwardRef<MapStageHandle, MapStageProps>(function MapStage(
       doubleClick={{ mode: "toggle" }}
       panning={{ disabled: panningDisabled }}
       wheel={{ step: 0.0015 }}
-      onTransform={(_ref, state) => onScaleChange?.(state.scale)}
     >
       <TransformComponent
         wrapperStyle={{ width: "100%", height: "100%" }}
