@@ -88,9 +88,9 @@ const DRAW_TOOLS: { id: Tool; label: string }[] = [
 
 const DRAW_COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#ffffff", "#111111"];
 const DRAW_WIDTHS = [
-  { label: "细", value: 3 },
-  { label: "中", value: 6 },
-  { label: "粗", value: 10 },
+  { label: "细", value: 2 },
+  { label: "中", value: 4 },
+  { label: "粗", value: 7 },
 ];
 
 type Selection =

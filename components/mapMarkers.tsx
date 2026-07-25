@@ -65,7 +65,7 @@ export function WallLine({
           x2={p2.x}
           y2={p2.y}
           stroke={WALL_COLOR}
-          strokeWidth={highlighted || selected ? 10 : 6}
+          strokeWidth={highlighted || selected ? 7 : 4}
           strokeLinecap="round"
           opacity={highlighted ? 1 : 0.9}
           strokeDasharray={selected ? "4 6" : undefined}
