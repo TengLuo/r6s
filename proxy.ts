@@ -27,7 +27,9 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // 排除静态地图底图(/maps/...)、_next 内部资源、favicon —— 这些不是页面路由,
-  // 加上语言前缀重定向反而会 404。
-  matcher: ["/((?!maps|_next|favicon.ico).*)"],
+  // 排除所有静态资源(/maps、/ops、/gadgets、/shots、根目录的 svg 等 public/ 下的文件)
+  // 和 _next 内部资源 —— 用"路径里带不带文件扩展名"统一判断,而不是一个个列目录名,
+  // 不然以后随手在 public/ 下新建个目录放素材,又会重蹈覆辙:请求被错误地重定向到
+  // /zh/xxx.png 这种不存在的路径,导致图裂。
+  matcher: ["/((?!_next|.*\\..*).*)"],
 };

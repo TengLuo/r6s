@@ -43,14 +43,14 @@
     "walkthrough": "Walkthrough",
     "gunfight": "Gunfight hole",
     "foot": "Foot hole",
-    "floor": "Floor hole"
+    "floor": "Hatch"
   },
   "openingGlyph": {
     "vault": "V",
     "walkthrough": "W",
     "gunfight": "G",
     "foot": "Ft",
-    "floor": "Fl"
+    "floor": "H"
   },
   "commonGadgets": {
     "camera": "Bulletproof Camera",
