@@ -1,14 +1,16 @@
 "use client";
 
 import Image from "next/image";
-import { OPENING_PURPOSE_LABEL, type SelectedMarker } from "@/lib/schema";
+import type { SelectedMarker } from "@/lib/schema";
+import type { Dictionary } from "@/app/[lang]/dictionaries";
 
 interface MarkerDetailProps {
   marker: SelectedMarker | null;
   onClose: () => void;
+  dict: Dictionary;
 }
 
-export default function MarkerDetail({ marker, onClose }: MarkerDetailProps) {
+export default function MarkerDetail({ marker, onClose, dict }: MarkerDetailProps) {
   const open = marker !== null;
 
   return (
@@ -27,25 +29,26 @@ export default function MarkerDetail({ marker, onClose }: MarkerDetailProps) {
             onClick={onClose}
             className="self-end text-sm text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200"
           >
-            关闭 ✕
+            {dict.markerDetail.close}
           </button>
-          <MarkerBody marker={marker} />
+          <MarkerBody marker={marker} dict={dict} />
         </div>
       )}
     </div>
   );
 }
 
-function MarkerBody({ marker }: { marker: SelectedMarker }) {
+function MarkerBody({ marker, dict }: { marker: SelectedMarker; dict: Dictionary }) {
+  const d = dict.markerDetail;
   switch (marker.kind) {
     case "wall": {
       const wall = marker.data;
       return (
         <div className="space-y-2">
           <span className="inline-block rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950 dark:text-red-300">
-            墙体
+            {d.wallBadge}
           </span>
-          <h2 className="text-lg font-semibold">封墙</h2>
+          <h2 className="text-lg font-semibold">{d.wallTitle}</h2>
           {wall.note && <p className="text-sm text-neutral-600 dark:text-neutral-400">{wall.note}</p>}
         </div>
       );
@@ -55,11 +58,11 @@ function MarkerBody({ marker }: { marker: SelectedMarker }) {
       return (
         <div className="space-y-2">
           <span className="inline-block rounded bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-950 dark:text-orange-300">
-            洞口
+            {d.openingBadge}
           </span>
-          <h2 className="text-lg font-semibold">{OPENING_PURPOSE_LABEL[opening.purpose]}</h2>
+          <h2 className="text-lg font-semibold">{dict.openingPurpose[opening.purpose]}</h2>
           {opening.connectsTo && (
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">通向:{opening.connectsTo}</p>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">{d.connectsTo}{opening.connectsTo}</p>
           )}
           {opening.note && <p className="text-sm text-neutral-600 dark:text-neutral-400">{opening.note}</p>}
         </div>
@@ -70,7 +73,7 @@ function MarkerBody({ marker }: { marker: SelectedMarker }) {
       return (
         <div className="space-y-2">
           <span className="inline-block rounded bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
-            房间标注
+            {d.roomBadge}
           </span>
           <h2 className="text-lg font-semibold">{label.text}</h2>
         </div>
@@ -85,7 +88,7 @@ function MarkerBody({ marker }: { marker: SelectedMarker }) {
               {operatorName}
             </span>
             <span className="inline-block rounded bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
-              {placement.tier === "core" ? "核心位" : "备用位"}
+              {placement.tier === "core" ? d.core : d.alternative}
             </span>
           </div>
           <h2 className="text-lg font-semibold">{placement.title}</h2>
@@ -110,10 +113,10 @@ function MarkerBody({ marker }: { marker: SelectedMarker }) {
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <span className="inline-block rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-              通用道具
+              {d.commonGadgetBadge}
             </span>
             <span className="inline-block rounded bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
-              {placement.tier === "core" ? "核心位" : "备用位"}
+              {placement.tier === "core" ? d.core : d.alternative}
             </span>
           </div>
           <h2 className="text-lg font-semibold">{placement.title}</h2>

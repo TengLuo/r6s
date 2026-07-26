@@ -1,0 +1,174 @@
+{
+  "meta": {
+    "siteTitle": "R6 Siege 装修攻略",
+    "siteDescription": "彩虹六号:围攻 交互式地图装修攻略 —— 30 秒看懂一张图怎么防。",
+    "editorTitle": "地图标注编辑器 · R6 装修攻略",
+    "mapTitleSuffix": " · R6 装修攻略",
+    "mapNotFound": "地图未找到"
+  },
+  "home": {
+    "kicker": "OPERATION DATABASE // RANKED",
+    "title": "R6 Siege 排位地图攻略",
+    "subtitle": "选一张图,30 秒看懂怎么防。封墙、打洞、道具位一目了然,新手也能秒懂装修。",
+    "mapCountPrefix": "共 ",
+    "mapCountSuffix": " 张排位地图",
+    "annotatedCountLabel": "已收录攻略",
+    "editorLink": "标注编辑器 →",
+    "otherMapsTitle": "其他地图",
+    "otherMapsNote": "不在 Rank 池。"
+  },
+  "mapCard": {
+    "annotated": "攻略已收录",
+    "inProgress": "制作中"
+  },
+  "viewer": {
+    "backToList": "← 地图列表",
+    "wip": "该地图攻略正在制作中,当前仅为占位底图",
+    "all": "全部"
+  },
+  "markerDetail": {
+    "close": "关闭 ✕",
+    "wallBadge": "墙体",
+    "wallMapLabel": "墙",
+    "wallTitle": "封墙",
+    "openingBadge": "洞口",
+    "connectsTo": "通向:",
+    "roomBadge": "房间标注",
+    "commonGadgetBadge": "通用道具",
+    "core": "核心位",
+    "alternative": "备用位"
+  },
+  "openingPurpose": {
+    "vault": "翻越洞",
+    "walkthrough": "过人洞",
+    "gunfight": "对枪洞",
+    "foot": "脚洞",
+    "floor": "跳层洞"
+  },
+  "openingGlyph": {
+    "vault": "翻",
+    "walkthrough": "过",
+    "gunfight": "枪",
+    "foot": "脚",
+    "floor": "跳"
+  },
+  "commonGadgets": {
+    "camera": "防弹摄像头",
+    "deployable_shield": "部署盾",
+    "barbed_wire": "铁丝网",
+    "observation_blocker": "侦查阻断器",
+    "impact_grenade": "冲击手雷",
+    "nitro_cell": "硝化炸药",
+    "proximity_alarm": "警报传感器",
+    "breach_charge": "破坏装置",
+    "claymore": "诡雷",
+    "frag_grenade": "破片手雷",
+    "hard_breach_charge": "硬破坏装置",
+    "smoke_grenade": "烟雾弹",
+    "stun_grenade": "眩晕手雷",
+    "impact_emp_grenade": "冲击电磁手雷"
+  },
+  "editor": {
+    "title": "地图标注编辑器",
+    "loadFromRegistry": "从已注册地图加载…",
+    "uploadImage": "上传本地底图…",
+    "addFloor": "+ 添加楼层",
+    "floorIdPlaceholder": "楼层 id,如 2f/b1",
+    "floorNamePlaceholder": "显示名,如 2F/地下",
+    "chooseImage": "选择图片…",
+    "iconLabel": "图标",
+    "zoomOutAria": "缩小图标",
+    "zoomInAria": "放大图标",
+    "clearFloor": "清空本层",
+    "undo": "撤销",
+    "importJson": "导入 JSON",
+    "exportJson": "导出 JSON",
+    "customImageName": "自定义底图",
+    "defaultFloorName": "1F",
+    "unnamedPlacement": "未命名道具位",
+    "defaultRoomName": "房间名",
+    "confirmClearFloor": "确定要清空「{floor}」这一层的所有标记吗?(墙体/洞口/文字标注/道具位/画笔笔迹都会删掉,其他楼层不受影响)",
+    "confirmClearDrawings": "确定要清空「{floor}」这一层的所有画笔笔迹吗?(其他标注不受影响)",
+    "alertFloorIdExists": "该楼层 id 已存在",
+    "alertSelectGadgetFirst": "请先选择要放置的道具。",
+    "alertFillFloorIdAndName": "请先填楼层 id 和名称",
+    "alertImportFailed": "导入失败,JSON 格式不对:{message}",
+    "alertMissingFloors": "缺少 floors",
+    "tools": {
+      "select": "选择 / 拖动",
+      "textLabel": "文字标注"
+    },
+    "drawTools": {
+      "pen": "画笔",
+      "highlighter": "荧光笔",
+      "line": "直线",
+      "arrow": "箭头",
+      "rect": "矩形",
+      "ellipse": "圆圈",
+      "eraser": "橡皮(点笔迹删除)"
+    },
+    "drawSectionTitle": "画图",
+    "strokeWidth": {
+      "thin": "细",
+      "medium": "中",
+      "thick": "粗"
+    },
+    "drawColorAria": "画笔颜色 {color}",
+    "clearFloorDrawings": "清空本层笔迹",
+    "help": {
+      "wall": "封墙:拖拽一下 = 一段墙。画完后选中它,拖两端的白色圆点手柄可以微调长度/角度,墙中点上的「墙」字徽章可以拖动整段墙平移,面板数(墙×N)在右侧面板里填。",
+      "opening": "洞口:直接选翻越/过人/对枪/脚洞/跳层里的一个,点一下放置,类型放错了选中后还能改。",
+      "textLabel": "文字标注:点一下放置,右侧改文字,给房间起名。",
+      "placement": "道具位:先在右侧选干员再选道具,点一下放置,拖动可定朝向。",
+      "handles": "选中任意标记后,图标旁会出现把手:白色拉大缩小,蓝色是转朝向/视野扇形;道具位额外多一个橙色把手,单独转图标本身的角度,跟朝向互不影响。把手 3 秒不操作会自动淡出,再点一下图标或拖一下把手就会重新淡入。",
+      "draw": "画图:画笔/荧光笔按住拖动手绘;直线/箭头/矩形/圆圈按下拖到位松手;橡皮点哪条笔迹删哪条,都能 Ctrl+Z 撤销。",
+      "clickBehavior": "任意工具下,指针按在已有标记上都是直接选中并可拖动,不会重复叠加;点在空白处才会新建。",
+      "shortcuts": "快捷键:Esc / 鼠标右键 取消并切回选择 · Delete 删除 · Ctrl+Z 撤销"
+    },
+    "role": {
+      "defend": "防守",
+      "attack": "进攻"
+    },
+    "customOperator": "自定义干员",
+    "customOperatorTitleSuffix": "(自定义)",
+    "exclusiveGadgetHint": "专属道具(选干员时已自动选中)",
+    "commonGadget": "通用道具",
+    "imagePathHint": "导出用底图路径(本地上传的图只是预览,需把图片文件放到 public 对应位置才能在正式页面显示)",
+    "panel": {
+      "wall": {
+        "title": "封墙",
+        "countLabel": "面板数(徽章显示「墙×N」,留空/1 就只显示「墙」)",
+        "noteLabel": "说明",
+        "delete": "删除该墙体"
+      },
+      "opening": {
+        "titlePrefix": "洞口 · ",
+        "typeLabel": "类型",
+        "connectsToLabel": "通向(楼层 id)",
+        "noteLabel": "说明",
+        "delete": "删除"
+      },
+      "textLabel": {
+        "title": "文字标注",
+        "textLabel": "文字(房间名)",
+        "delete": "删除"
+      },
+      "placement": {
+        "titlePrefix": "道具位 · ",
+        "commonTitle": "通用道具位",
+        "gadgetLabel": "道具",
+        "unset": "(未设置)",
+        "titleLabel": "标题",
+        "descriptionLabel": "说明",
+        "tierLabel": "等级",
+        "core": "核心位",
+        "alternative": "备用位",
+        "facingLabel": "朝向角度(0=右,顺时针,留空=无朝向)",
+        "requiresWallLabel": "依赖墙体",
+        "none": "无",
+        "screenshotLabel": "截图路径",
+        "delete": "删除该道具位"
+      }
+    }
+  }
+}

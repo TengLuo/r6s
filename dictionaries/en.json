@@ -1,0 +1,174 @@
+{
+  "meta": {
+    "siteTitle": "R6 Siege Tactics Guide",
+    "siteDescription": "Rainbow Six Siege interactive tactical map guide — understand how to defend a site in 30 seconds.",
+    "editorTitle": "Map Annotation Editor · R6 Siege Guide",
+    "mapTitleSuffix": " · R6 Siege Guide",
+    "mapNotFound": "Map not found"
+  },
+  "home": {
+    "kicker": "OPERATION DATABASE // RANKED",
+    "title": "R6 Siege Ranked Map Guide",
+    "subtitle": "Pick a map, understand the defense in 30 seconds. Reinforcements, murder holes, and gadget spots at a glance — easy enough for beginners.",
+    "mapCountPrefix": "",
+    "mapCountSuffix": " ranked maps",
+    "annotatedCountLabel": "Guides added",
+    "editorLink": "Map Editor →",
+    "otherMapsTitle": "Other Maps",
+    "otherMapsNote": "Not in the ranked pool."
+  },
+  "mapCard": {
+    "annotated": "Guide ready",
+    "inProgress": "In progress"
+  },
+  "viewer": {
+    "backToList": "← Map list",
+    "wip": "This map's guide is still in progress — placeholder blueprint only for now",
+    "all": "All"
+  },
+  "markerDetail": {
+    "close": "Close ✕",
+    "wallBadge": "Wall",
+    "wallMapLabel": "Wall",
+    "wallTitle": "Reinforce",
+    "openingBadge": "Opening",
+    "connectsTo": "Connects to: ",
+    "roomBadge": "Room label",
+    "commonGadgetBadge": "Common gadget",
+    "core": "Core spot",
+    "alternative": "Alt spot"
+  },
+  "openingPurpose": {
+    "vault": "Vault",
+    "walkthrough": "Walkthrough",
+    "gunfight": "Gunfight hole",
+    "foot": "Foot hole",
+    "floor": "Floor hole"
+  },
+  "openingGlyph": {
+    "vault": "V",
+    "walkthrough": "W",
+    "gunfight": "G",
+    "foot": "Ft",
+    "floor": "Fl"
+  },
+  "commonGadgets": {
+    "camera": "Bulletproof Camera",
+    "deployable_shield": "Deployable Shield",
+    "barbed_wire": "Barbed Wire",
+    "observation_blocker": "Observation Blocker",
+    "impact_grenade": "Impact Grenade",
+    "nitro_cell": "Nitro Cell",
+    "proximity_alarm": "Proximity Alarm",
+    "breach_charge": "Breach Charge",
+    "claymore": "Claymore",
+    "frag_grenade": "Frag Grenade",
+    "hard_breach_charge": "Hard Breach Charge",
+    "smoke_grenade": "Smoke Grenade",
+    "stun_grenade": "Stun Grenade",
+    "impact_emp_grenade": "Impact EMP Grenade"
+  },
+  "editor": {
+    "title": "Map Annotation Editor",
+    "loadFromRegistry": "Load a registered map…",
+    "uploadImage": "Upload local blueprint…",
+    "addFloor": "+ Add floor",
+    "floorIdPlaceholder": "Floor id, e.g. 2f/b1",
+    "floorNamePlaceholder": "Display name, e.g. 2F/Basement",
+    "chooseImage": "Choose image…",
+    "iconLabel": "Icons",
+    "zoomOutAria": "Shrink icons",
+    "zoomInAria": "Enlarge icons",
+    "clearFloor": "Clear floor",
+    "undo": "Undo",
+    "importJson": "Import JSON",
+    "exportJson": "Export JSON",
+    "customImageName": "Custom blueprint",
+    "defaultFloorName": "1F",
+    "unnamedPlacement": "Unnamed placement",
+    "defaultRoomName": "Room name",
+    "confirmClearFloor": "Clear every marker on \"{floor}\"? (walls/openings/labels/placements/drawings all get removed — other floors are unaffected)",
+    "confirmClearDrawings": "Clear all drawings on \"{floor}\"? (other markers are unaffected)",
+    "alertFloorIdExists": "That floor id already exists",
+    "alertSelectGadgetFirst": "Pick a gadget to place first.",
+    "alertFillFloorIdAndName": "Fill in the floor id and name first",
+    "alertImportFailed": "Import failed, invalid JSON: {message}",
+    "alertMissingFloors": "Missing floors",
+    "tools": {
+      "select": "Select / Move",
+      "textLabel": "Text label"
+    },
+    "drawTools": {
+      "pen": "Pen",
+      "highlighter": "Highlighter",
+      "line": "Line",
+      "arrow": "Arrow",
+      "rect": "Rectangle",
+      "ellipse": "Ellipse",
+      "eraser": "Eraser (click a stroke to delete)"
+    },
+    "drawSectionTitle": "Draw",
+    "strokeWidth": {
+      "thin": "Thin",
+      "medium": "Medium",
+      "thick": "Thick"
+    },
+    "drawColorAria": "Pen color {color}",
+    "clearFloorDrawings": "Clear floor drawings",
+    "help": {
+      "wall": "Reinforce: drag once = one wall segment. After drawing, select it — drag the two white end handles to fine-tune length/angle, drag the \"Wall\" badge at the midpoint to move the whole segment, and set the panel count (Wall×N) in the right panel.",
+      "opening": "Opening: pick one of vault/walkthrough/gunfight/foot/floor, click to place — picked the wrong type? select it and change it after.",
+      "textLabel": "Text label: click to place, edit the text on the right to name a room.",
+      "placement": "Placement: pick an operator on the right, then a gadget, click to place — drag to set facing.",
+      "handles": "Selecting any marker shows handles: white = resize, blue = rotate facing/vision cone. Placements get an extra orange handle to rotate the icon itself, independent of facing. Handles auto-fade after 3s idle — click the icon or drag a handle to bring them back.",
+      "draw": "Draw: pen/highlighter — hold and drag to freehand; line/arrow/rectangle/ellipse — press, drag, release; eraser — click a stroke to delete it. Everything supports Ctrl+Z.",
+      "clickBehavior": "In any tool, pointing at an existing marker always selects/drags it instead of stacking a duplicate — click empty space to create a new one.",
+      "shortcuts": "Shortcuts: Esc / right-click cancels and returns to Select · Delete removes · Ctrl+Z undoes"
+    },
+    "role": {
+      "defend": "Defend",
+      "attack": "Attack"
+    },
+    "customOperator": "Custom operators",
+    "customOperatorTitleSuffix": " (custom)",
+    "exclusiveGadgetHint": "Signature gadget (auto-selected with the operator)",
+    "commonGadget": "Common gadgets",
+    "imagePathHint": "Export blueprint path (locally uploaded images are preview-only — move the file into the matching public/ path for it to show on the live page)",
+    "panel": {
+      "wall": {
+        "title": "Reinforce",
+        "countLabel": "Panel count (badge shows \"Wall×N\"; blank/1 shows just \"Wall\")",
+        "noteLabel": "Notes",
+        "delete": "Delete this wall"
+      },
+      "opening": {
+        "titlePrefix": "Opening · ",
+        "typeLabel": "Type",
+        "connectsToLabel": "Connects to (floor id)",
+        "noteLabel": "Notes",
+        "delete": "Delete"
+      },
+      "textLabel": {
+        "title": "Text label",
+        "textLabel": "Text (room name)",
+        "delete": "Delete"
+      },
+      "placement": {
+        "titlePrefix": "Placement · ",
+        "commonTitle": "Common placement",
+        "gadgetLabel": "Gadget",
+        "unset": "(not set)",
+        "titleLabel": "Title",
+        "descriptionLabel": "Description",
+        "tierLabel": "Tier",
+        "core": "Core spot",
+        "alternative": "Alt spot",
+        "facingLabel": "Facing angle (0=right, clockwise, blank=none)",
+        "requiresWallLabel": "Requires wall",
+        "none": "None",
+        "screenshotLabel": "Screenshot path",
+        "delete": "Delete this placement"
+      }
+    }
+  }
+}

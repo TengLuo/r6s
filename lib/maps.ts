@@ -1,4 +1,5 @@
-import type { MapData } from "@/lib/schema";
+import type { Floor, MapData } from "@/lib/schema";
+import { pick, type Locale } from "@/lib/i18n";
 import border from "@/data/maps/border.json";
 import bank from "@/data/maps/bank.json";
 import chalet from "@/data/maps/chalet.json";
@@ -70,6 +71,14 @@ export function listMaps(): MapData[] {
 
 export function listOtherMaps(): MapData[] {
   return Object.values(OTHER_MAPS);
+}
+
+export function getMapName(map: MapData, lang: Locale): string {
+  return pick(map.name, map.nameEn, lang);
+}
+
+export function getFloorName(floor: Floor, lang: Locale): string {
+  return pick(floor.name, floor.nameEn, lang);
 }
 
 /** 该图是否已有真实/示例战术标注内容,还是仅有占位底图 */

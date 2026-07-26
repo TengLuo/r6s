@@ -17,6 +17,8 @@ export interface FloorSize {
 export interface Floor {
   id: string;
   name: string;
+  /** 英文楼层名,留空则英文界面回退显示 name */
+  nameEn?: string;
   /** 底图路径,相对 /public,例如 /maps/border/2f.png */
   image: string;
   /** 底图原始像素尺寸,所有该楼层下的坐标都以此为参考系 */
@@ -140,6 +142,8 @@ export interface Preset {
 export interface MapData {
   id: string;
   name: string;
+  /** 英文地图名,留空则英文界面回退显示 name */
+  nameEn?: string;
   floors: Floor[];
   walls: Wall[];
   openings: Opening[];

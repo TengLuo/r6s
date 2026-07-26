@@ -1,19 +1,24 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { MapData } from "@/lib/schema";
+import { getMapName } from "@/lib/maps";
+import type { Locale } from "@/lib/i18n";
 
 interface MapCardProps {
   map: MapData;
   index: number;
   annotated: boolean;
+  lang: Locale;
+  dict: { annotated: string; inProgress: string };
 }
 
-export default function MapCard({ map, index, annotated }: MapCardProps) {
+export default function MapCard({ map, index, annotated, lang, dict }: MapCardProps) {
   const thumb = map.floors[0]?.image;
+  const name = getMapName(map, lang);
 
   return (
     <Link
-      href={`/editor?map=${map.id}`}
+      href={`/${lang}/editor?map=${map.id}`}
       className="group relative block overflow-hidden rounded-lg border border-white/10 bg-neutral-900 transition-colors hover:border-red-500/60"
     >
       <span className="pointer-events-none absolute left-2 top-2 z-10 font-mono text-6xl font-black leading-none text-white/[0.06] transition-colors group-hover:text-red-500/10">
@@ -30,7 +35,7 @@ export default function MapCard({ map, index, annotated }: MapCardProps) {
         {thumb && (
           <Image
             src={thumb}
-            alt={map.name}
+            alt={name}
             fill
             priority={index < 4}
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
@@ -49,9 +54,9 @@ export default function MapCard({ map, index, annotated }: MapCardProps) {
               : "bg-white/10 text-neutral-400",
           ].join(" ")}
         >
-          {annotated ? "攻略已收录" : "制作中"}
+          {annotated ? dict.annotated : dict.inProgress}
         </span>
-        <h2 className="mt-1.5 truncate text-base font-semibold text-white">{map.name}</h2>
+        <h2 className="mt-1.5 truncate text-base font-semibold text-white">{name}</h2>
       </div>
     </Link>
   );

@@ -8,15 +8,16 @@ interface OperatorFilterProps {
   mapData: MapData;
   activeOperatorId: string | null;
   onChange: (operatorId: string | null) => void;
+  dict: { all: string };
 }
 
-export default function OperatorFilter({ mapData, activeOperatorId, onChange }: OperatorFilterProps) {
+export default function OperatorFilter({ mapData, activeOperatorId, onChange, dict }: OperatorFilterProps) {
   const operatorIds = Object.keys(mapData.operators);
   if (operatorIds.length === 0) return null;
 
   return (
     <div className="flex items-center gap-1.5 overflow-x-auto px-4 py-2">
-      <FilterChip label="全部" active={activeOperatorId === null} onClick={() => onChange(null)} />
+      <FilterChip label={dict.all} active={activeOperatorId === null} onClick={() => onChange(null)} />
       {operatorIds.map((id) => {
         const op = mapData.operators[id];
         return (

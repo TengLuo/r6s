@@ -34,6 +34,7 @@ export function WallLine({
   highlighted,
   selected,
   scale = 1,
+  wallLabel = "墙",
   onClick,
   onMovePointerDown,
 }: {
@@ -42,13 +43,15 @@ export function WallLine({
   selected?: boolean;
   /** 徽章整体缩放倍数,不影响墙线本身粗细 */
   scale?: number;
+  /** 徽章文字("墙"/"Wall"),不传则回退中文 */
+  wallLabel?: string;
   onClick?: () => void;
   /** 拖拽墙中点的"墙"字徽章,整段墙平移(不改变长度/角度) */
   onMovePointerDown?: SvgPointerHandler;
 }) {
   const [p1, p2] = wall.points;
   const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
-  const label = wall.count && wall.count > 1 ? `墙×${wall.count}` : "墙";
+  const label = wall.count && wall.count > 1 ? `${wallLabel}×${wall.count}` : wallLabel;
   const effScale = scale * (wall.size ?? 1);
   const fontSize = 14 * effScale;
   const paddingX = 6 * effScale;
@@ -128,19 +131,22 @@ export function OpeningMarker({
   opening,
   selected,
   scale = 1,
+  glyph,
   onClick,
   onPointerDown,
 }: {
   opening: Opening;
   selected?: boolean;
   scale?: number;
+  /** 徽章上的单字/短标识,不传则回退中文 */
+  glyph?: string;
   onClick?: () => void;
   onPointerDown?: SvgPointerHandler;
 }) {
   const effScale = scale * (opening.size ?? 1);
   const size = 15 * effScale;
   const color = OPENING_PURPOSE_COLOR[opening.purpose];
-  const glyph = OPENING_PURPOSE_GLYPH[opening.purpose];
+  const resolvedGlyph = glyph ?? OPENING_PURPOSE_GLYPH[opening.purpose];
   return (
     <g
       onClick={onClick}
@@ -175,7 +181,7 @@ export function OpeningMarker({
         dominantBaseline="central"
         style={{ userSelect: "none" }}
       >
-        {glyph}
+        {resolvedGlyph}
       </text>
     </g>
   );

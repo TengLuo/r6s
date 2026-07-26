@@ -13,19 +13,22 @@ import {
   getOperatorColor,
 } from "@/components/mapMarkers";
 import OperatorAvatar from "@/components/OperatorAvatar";
-import { ALL_MAPS, MAPS } from "@/lib/maps";
+import { ALL_MAPS, MAPS, getFloorName, getMapName } from "@/lib/maps";
 import {
   COMMON_GADGETS_ATTACK,
   COMMON_GADGETS_DEFEND,
   findGadgetName,
   getCommonGadgetIcon,
+  getGadgetDisplayName,
   getGadgetOptions,
   getOperatorInfo,
   getOperatorsByRole,
   type OperatorRole,
 } from "@/lib/operators";
-import { OPENING_PURPOSE_COLOR, OPENING_PURPOSE_LABEL } from "@/lib/schema";
+import { OPENING_PURPOSE_COLOR } from "@/lib/schema";
 import type { Drawing, DrawingKind, Floor, MapData, Opening, OpeningPurpose, Placement, PlacementTier, TextLabel, Wall } from "@/lib/schema";
+import type { Locale } from "@/lib/i18n";
+import type { Dictionary } from "@/app/[lang]/dictionaries";
 
 type Tool =
   | "select"
@@ -55,17 +58,6 @@ const TOOL_OPENING_PURPOSE: Partial<Record<Tool, OpeningPurpose>> = {
   opening_floor: "floor",
 };
 
-const TOOLS: { id: Tool; label: string; color?: string }[] = [
-  { id: "select", label: "选择 / 拖动" },
-  { id: "wall", label: "封墙", color: WALL_COLOR },
-  ...OPENING_PURPOSES.map((p) => ({
-    id: `opening_${p}` as Tool,
-    label: OPENING_PURPOSE_LABEL[p],
-    color: OPENING_PURPOSE_COLOR[p],
-  })),
-  { id: "textLabel", label: "文字标注", color: "#64748b" },
-];
-
 /** 画图工具与 Drawing.kind 的对应关系,橡皮不产生新笔迹所以不在这里 */
 const DRAW_TOOL_KIND: Partial<Record<Tool, DrawingKind>> = {
   draw_pen: "pen",
@@ -76,22 +68,7 @@ const DRAW_TOOL_KIND: Partial<Record<Tool, DrawingKind>> = {
   draw_ellipse: "ellipse",
 };
 
-const DRAW_TOOLS: { id: Tool; label: string }[] = [
-  { id: "draw_pen", label: "画笔" },
-  { id: "draw_highlighter", label: "荧光笔" },
-  { id: "draw_line", label: "直线" },
-  { id: "draw_arrow", label: "箭头" },
-  { id: "draw_rect", label: "矩形" },
-  { id: "draw_ellipse", label: "圆圈" },
-  { id: "draw_eraser", label: "橡皮(点笔迹删除)" },
-];
-
 const DRAW_COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#ffffff", "#111111"];
-const DRAW_WIDTHS = [
-  { label: "细", value: 2 },
-  { label: "中", value: 4 },
-  { label: "粗", value: 7 },
-];
 
 type Selection =
   | { kind: "wall"; id: string }
@@ -150,7 +127,42 @@ function blankMapData(id: string, name: string, floor: Floor): MapData {
 
 const REGISTRY_MAP_IDS = Object.keys(ALL_MAPS);
 
-export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
+export default function MapEditor({
+  initialMapId,
+  lang,
+  dict,
+}: {
+  initialMapId?: string;
+  lang: Locale;
+  dict: Dictionary;
+}) {
+  const TOOLS: { id: Tool; label: string; color?: string }[] = [
+    { id: "select", label: dict.editor.tools.select },
+    { id: "wall", label: dict.editor.panel.wall.title, color: WALL_COLOR },
+    ...OPENING_PURPOSES.map((p) => ({
+      id: `opening_${p}` as Tool,
+      label: dict.openingPurpose[p],
+      color: OPENING_PURPOSE_COLOR[p],
+    })),
+    { id: "textLabel", label: dict.editor.tools.textLabel, color: "#64748b" },
+  ];
+
+  const DRAW_TOOLS: { id: Tool; label: string }[] = [
+    { id: "draw_pen", label: dict.editor.drawTools.pen },
+    { id: "draw_highlighter", label: dict.editor.drawTools.highlighter },
+    { id: "draw_line", label: dict.editor.drawTools.line },
+    { id: "draw_arrow", label: dict.editor.drawTools.arrow },
+    { id: "draw_rect", label: dict.editor.drawTools.rect },
+    { id: "draw_ellipse", label: dict.editor.drawTools.ellipse },
+    { id: "draw_eraser", label: dict.editor.drawTools.eraser },
+  ];
+
+  const DRAW_WIDTHS = [
+    { label: dict.editor.strokeWidth.thin, value: 2 },
+    { label: dict.editor.strokeWidth.medium, value: 4 },
+    { label: dict.editor.strokeWidth.thick, value: 7 },
+  ];
+
   const [mapData, setMapData] = useState<MapData>(() =>
     structuredClone((initialMapId && ALL_MAPS[initialMapId]) || MAPS["border"])
   );
@@ -183,6 +195,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
   const [showAddFloor, setShowAddFloor] = useState(false);
   const [newFloorId, setNewFloorId] = useState("");
   const [newFloorName, setNewFloorName] = useState("");
+  const [newFloorNameEn, setNewFloorNameEn] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
   const addFloorInputRef = useRef<HTMLInputElement>(null);
@@ -251,11 +264,11 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
       const id = "custom";
       const newFloor: Floor = {
         id: "1f",
-        name: "1F",
+        name: dict.editor.defaultFloorName,
         image: url,
         imageSize: { width: img.naturalWidth, height: img.naturalHeight },
       };
-      setMapData(blankMapData(id, "自定义底图", newFloor));
+      setMapData(blankMapData(id, dict.editor.customImageName, newFloor));
       setActiveFloorId("1f");
       setActiveOperatorId(null);
       setActiveGadgetId(null);
@@ -271,21 +284,29 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
   function addFloor(file: File) {
     const id = newFloorId.trim();
     const name = newFloorName.trim();
+    const nameEn = newFloorNameEn.trim();
     if (!id || !name) return;
     if (mapData.floors.some((f) => f.id === id)) {
-      window.alert("该楼层 id 已存在");
+      window.alert(dict.editor.alertFloorIdExists);
       return;
     }
     const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
-      const newFloor: Floor = { id, name, image: url, imageSize: { width: img.naturalWidth, height: img.naturalHeight } };
+      const newFloor: Floor = {
+        id,
+        name,
+        nameEn: nameEn || undefined,
+        image: url,
+        imageSize: { width: img.naturalWidth, height: img.naturalHeight },
+      };
       patch((md) => ({ ...md, floors: [...md.floors, newFloor] }));
       setImagePathHints((h) => ({ ...h, [id]: `/maps/${mapData.id || "map"}/${id}.${file.name.split(".").pop() ?? "png"}` }));
       switchFloor(id);
       setShowAddFloor(false);
       setNewFloorId("");
       setNewFloorName("");
+      setNewFloorNameEn("");
     };
     img.src = url;
   }
@@ -310,7 +331,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
       try {
         const data = JSON.parse(String(reader.result)) as MapData;
         if (!data.floors || !Array.isArray(data.floors) || data.floors.length === 0) {
-          throw new Error("缺少 floors");
+          throw new Error(dict.editor.alertMissingFloors);
         }
         // 兼容加画图功能之前导出的旧 JSON
         data.drawings = data.drawings ?? [];
@@ -325,7 +346,9 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
         setHistory([]);
         setImagePathHints({});
       } catch (err) {
-        window.alert(`导入失败,JSON 格式不对:${err instanceof Error ? err.message : String(err)}`);
+        window.alert(
+          dict.editor.alertImportFailed.replace("{message}", err instanceof Error ? err.message : String(err))
+        );
       }
     };
     reader.readAsText(file);
@@ -356,8 +379,8 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
 
   /** 清空当前楼层所有标记(墙/洞口/文字/道具位),其他楼层不受影响。会先弹确认,清完还能 Ctrl+Z 撤销。 */
   function clearFloor() {
-    const floorLabel = floor.name;
-    if (!window.confirm(`确定要清空「${floorLabel}」这一层的所有标记吗?(墙体/洞口/文字标注/道具位/画笔笔迹都会删掉,其他楼层不受影响)`)) {
+    const floorLabel = getFloorName(floor, lang);
+    if (!window.confirm(dict.editor.confirmClearFloor.replace("{floor}", floorLabel))) {
       return;
     }
     commit({
@@ -379,7 +402,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
 
   /** 只清掉当前楼层的画笔笔迹,不动墙/洞口/道具位那些正式标注 */
   function clearFloorDrawings() {
-    if (!window.confirm(`确定要清空「${floor.name}」这一层的所有画笔笔迹吗?(其他标注不受影响)`)) return;
+    if (!window.confirm(dict.editor.confirmClearDrawings.replace("{floor}", getFloorName(floor, lang)))) return;
     commit({ ...mapData, drawings: mapData.drawings.filter((d) => d.floor !== activeFloorId) });
   }
 
@@ -604,13 +627,13 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
         return;
       }
       const id = genId("t");
-      commit({ ...mapData, textLabels: [...mapData.textLabels, { id, floor: activeFloorId, pos: point, text: "房间名" }] });
+      commit({ ...mapData, textLabels: [...mapData.textLabels, { id, floor: activeFloorId, pos: point, text: dict.editor.defaultRoomName }] });
       setSelection({ kind: "textLabel", id });
     } else if (tool === "placement") {
       // 不强制要求先选干员:选了干员就放到那个干员名下,没选干员但选了通用道具
       // 就当成不挂靠任何干员的通用道具位(跟洞口一样独立存在)。
       if (!activeGadgetId) {
-        window.alert("请先选择要放置的道具。");
+        window.alert(dict.editor.alertSelectGadgetFirst);
         return;
       }
       const existing = findExistingMarkerAt(point);
@@ -663,7 +686,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
     if (draft?.kind === "placement" && activeGadgetId) {
       const facing = dist(draft.start, point) >= 8 ? angleDeg(draft.start, point) : undefined;
       const id = genId("p");
-      const gadgetName = findGadgetName(activeGadgetId, activeOperatorId ?? undefined) ?? "未命名道具位";
+      const gadgetName = findGadgetName(activeGadgetId, activeOperatorId ?? undefined, lang) ?? dict.editor.unnamedPlacement;
       const newPlacement: Placement = {
         id,
         floor: activeFloorId,
@@ -777,17 +800,17 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
   return (
     <div className="flex h-dvh flex-col bg-neutral-100 dark:bg-neutral-950">
       <header className="z-30 flex flex-wrap items-center gap-3 border-b border-neutral-200 bg-white px-4 py-2 dark:border-neutral-800 dark:bg-neutral-900">
-        <h1 className="text-sm font-semibold text-neutral-800 dark:text-neutral-100">地图标注编辑器</h1>
+        <h1 className="text-sm font-semibold text-neutral-800 dark:text-neutral-100">{dict.editor.title}</h1>
 
         <select
           className="rounded border border-neutral-300 bg-white px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-800"
           value={REGISTRY_MAP_IDS.includes(mapData.id) ? mapData.id : ""}
           onChange={(e) => e.target.value && loadRegistryMap(e.target.value)}
         >
-          <option value="">从已注册地图加载…</option>
+          <option value="">{dict.editor.loadFromRegistry}</option>
           {REGISTRY_MAP_IDS.map((id) => (
             <option key={id} value={id}>
-              {ALL_MAPS[id].name}
+              {getMapName(ALL_MAPS[id], lang)}
             </option>
           ))}
         </select>
@@ -796,7 +819,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
           onClick={() => fileInputRef.current?.click()}
           className="rounded border border-neutral-300 px-2 py-1 text-sm hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
         >
-          上传本地底图…
+          {dict.editor.uploadImage}
         </button>
         <input
           ref={fileInputRef}
@@ -822,40 +845,46 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
                   : "border border-neutral-300 text-neutral-600 dark:border-neutral-700 dark:text-neutral-300",
               ].join(" ")}
             >
-              {f.name}
+              {getFloorName(f, lang)}
             </button>
           ))}
           <button
             onClick={() => setShowAddFloor((v) => !v)}
             className="rounded border border-dashed border-neutral-300 px-2 py-1 text-xs text-neutral-500 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
           >
-            + 添加楼层
+            {dict.editor.addFloor}
           </button>
           {showAddFloor && (
             <div className="flex items-center gap-1">
               <input
                 value={newFloorId}
                 onChange={(e) => setNewFloorId(e.target.value)}
-                placeholder="楼层 id,如 2f/b1"
+                placeholder={dict.editor.floorIdPlaceholder}
                 className="w-24 rounded border border-neutral-300 px-1.5 py-1 text-xs dark:border-neutral-700 dark:bg-neutral-800"
               />
               <input
                 value={newFloorName}
                 onChange={(e) => setNewFloorName(e.target.value)}
-                placeholder="显示名,如 2F/地下"
+                placeholder={dict.editor.floorNamePlaceholder}
                 className="w-24 rounded border border-neutral-300 px-1.5 py-1 text-xs dark:border-neutral-700 dark:bg-neutral-800"
+              />
+              <input
+                value={newFloorNameEn}
+                onChange={(e) => setNewFloorNameEn(e.target.value)}
+                placeholder="English name (optional)"
+                className="w-28 rounded border border-neutral-300 px-1.5 py-1 text-xs dark:border-neutral-700 dark:bg-neutral-800"
               />
               <button
                 onClick={() => {
                   if (!newFloorId.trim() || !newFloorName.trim()) {
-                    window.alert("请先填楼层 id 和名称");
+                    window.alert(dict.editor.alertFillFloorIdAndName);
                     return;
                   }
                   addFloorInputRef.current?.click();
                 }}
                 className="rounded border border-neutral-300 px-2 py-1 text-xs hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
               >
-                选择图片…
+                {dict.editor.chooseImage}
               </button>
               <input
                 ref={addFloorInputRef}
@@ -874,11 +903,11 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
 
         <div className="ml-auto flex items-center gap-2">
           <div className="flex items-center gap-1 rounded border border-neutral-300 px-1 dark:border-neutral-700">
-            <span className="pl-1 text-xs text-neutral-500">图标</span>
+            <span className="pl-1 text-xs text-neutral-500">{dict.editor.iconLabel}</span>
             <button
               onClick={() => setIconScale((s) => Math.max(0.5, Math.round((s - 0.1) * 10) / 10))}
               className="px-1.5 py-1 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800"
-              aria-label="缩小图标"
+              aria-label={dict.editor.zoomOutAria}
             >
               −
             </button>
@@ -888,7 +917,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
             <button
               onClick={() => setIconScale((s) => Math.min(2.5, Math.round((s + 0.1) * 10) / 10))}
               className="px-1.5 py-1 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800"
-              aria-label="放大图标"
+              aria-label={dict.editor.zoomInAria}
             >
               ＋
             </button>
@@ -897,20 +926,20 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
             onClick={clearFloor}
             className="rounded border border-amber-300 px-2 py-1 text-sm text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950"
           >
-            清空本层
+            {dict.editor.clearFloor}
           </button>
           <button
             onClick={undo}
             disabled={history.length === 0}
             className="rounded border border-neutral-300 px-2 py-1 text-sm disabled:opacity-40 dark:border-neutral-700"
           >
-            撤销 ({history.length})
+            {dict.editor.undo} ({history.length})
           </button>
           <button
             onClick={() => importInputRef.current?.click()}
             className="rounded border border-neutral-300 px-2 py-1 text-sm hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
           >
-            导入 JSON
+            {dict.editor.importJson}
           </button>
           <input
             ref={importInputRef}
@@ -927,7 +956,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
             onClick={handleExport}
             className="rounded bg-red-600 px-3 py-1 text-sm font-medium text-white hover:bg-red-500"
           >
-            导出 JSON
+            {dict.editor.exportJson}
           </button>
         </div>
       </header>
@@ -953,7 +982,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
             </button>
           ))}
 
-          <p className="mt-3 border-t border-neutral-200 pt-3 text-xs text-neutral-500 dark:border-neutral-800">画图</p>
+          <p className="mt-3 border-t border-neutral-200 pt-3 text-xs text-neutral-500 dark:border-neutral-800">{dict.editor.drawSectionTitle}</p>
           {DRAW_TOOLS.map((t) => (
             <button
               key={t.id}
@@ -978,7 +1007,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
               <button
                 key={c}
                 onClick={() => setDrawColor(c)}
-                aria-label={`画笔颜色 ${c}`}
+                aria-label={dict.editor.drawColorAria.replace("{color}", c)}
                 className={[
                   "h-5 w-5 rounded-full border-2",
                   drawColor === c ? "border-neutral-900 dark:border-white" : "border-neutral-300 dark:border-neutral-600",
@@ -1007,25 +1036,25 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
             onClick={clearFloorDrawings}
             className="mt-1 rounded border border-amber-300 px-2 py-1 text-xs text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950"
           >
-            清空本层笔迹
+            {dict.editor.clearFloorDrawings}
           </button>
 
           <p className="mt-4 text-xs leading-relaxed text-neutral-400">
-            封墙:拖拽一下 = 一段墙。画完后选中它,拖两端的白色圆点手柄可以微调长度/角度,墙中点上的「墙」字徽章可以拖动整段墙平移,面板数(墙×N)在右侧面板里填。
+            {dict.editor.help.wall}
             <br />
-            洞口:直接选翻越/过人/对枪/脚洞/跳层里的一个,点一下放置,类型放错了选中后还能改。
+            {dict.editor.help.opening}
             <br />
-            文字标注:点一下放置,右侧改文字,给房间起名。
+            {dict.editor.help.textLabel}
             <br />
-            道具位:先在右侧选干员再选道具,点一下放置,拖动可定朝向。
+            {dict.editor.help.placement}
             <br />
-选中任意标记后,图标旁会出现把手:白色拉大缩小,蓝色是转朝向/视野扇形;道具位额外多一个橙色把手,单独转图标本身的角度,跟朝向互不影响。把手 3 秒不操作会自动淡出,再点一下图标或拖一下把手就会重新淡入。
+            {dict.editor.help.handles}
             <br />
-            画图:画笔/荧光笔按住拖动手绘;直线/箭头/矩形/圆圈按下拖到位松手;橡皮点哪条笔迹删哪条,都能 Ctrl+Z 撤销。
+            {dict.editor.help.draw}
             <br />
-            任意工具下,指针按在已有标记上都是直接选中并可拖动,不会重复叠加;点在空白处才会新建。
+            {dict.editor.help.clickBehavior}
             <br />
-            快捷键:Esc / 鼠标右键 取消并切回选择 · Delete 删除 · Ctrl+Z 撤销
+            {dict.editor.help.shortcuts}
           </p>
         </aside>
 
@@ -1073,6 +1102,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
                   key={wall.id}
                   wall={wall}
                   scale={iconScale}
+                  wallLabel={dict.markerDetail.wallMapLabel}
                   selected={isSelected}
                   onClick={() => setSelection({ kind: "wall", id: wall.id })}
                   onMovePointerDown={(e) => {
@@ -1091,6 +1121,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
                   key={o.id}
                   opening={o}
                   scale={iconScale}
+                  glyph={dict.openingGlyph[o.purpose]}
                   selected={isSelected}
                   onClick={() => setSelection({ kind: "opening", id: o.id })}
                   onPointerDown={(e) => startDrag({ kind: "opening", id: o.id }, e)}
@@ -1311,7 +1342,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
                     : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800",
                 ].join(" ")}
               >
-                防守
+                {dict.editor.role.defend}
               </button>
               <button
                 onClick={() => setOperatorRoleTab("attack")}
@@ -1322,7 +1353,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
                     : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800",
                 ].join(" ")}
               >
-                进攻
+                {dict.editor.role.attack}
               </button>
             </div>
             <div className="grid grid-cols-6 gap-2">
@@ -1345,14 +1376,14 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
             </div>
             {Object.keys(mapData.operators).filter((id) => !getOperatorInfo(id)).length > 0 && (
               <>
-                <p className="text-xs text-neutral-500">自定义干员</p>
+                <p className="text-xs text-neutral-500">{dict.editor.customOperator}</p>
                 <div className="grid grid-cols-6 gap-2">
                   {Object.keys(mapData.operators)
                     .filter((id) => !getOperatorInfo(id))
                     .map((id) => (
                       <button
                         key={id}
-                        title={`${mapData.operators[id].name}(自定义)`}
+                        title={`${mapData.operators[id].name}${dict.editor.customOperatorTitleSuffix}`}
                         onClick={() => selectOperator(activeOperatorId === id ? null : id)}
                         className={[
                           "flex flex-col items-center gap-1 rounded p-1 text-[11px] leading-tight",
@@ -1375,7 +1406,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
                 if (!opInfo?.gadget) return null;
                 return (
                   <>
-                    <p className="text-xs text-neutral-500">专属道具(选干员时已自动选中)</p>
+                    <p className="text-xs text-neutral-500">{dict.editor.exclusiveGadgetHint}</p>
                     <button
                       onClick={() => setActiveGadgetId(opInfo.gadget!.id)}
                       className={[
@@ -1393,7 +1424,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
 
             {/* 通用道具不挂在任何干员名下,跟洞口一样是独立标记:点了直接能在地图上放,
                 不需要先选干员。点这里会顺便清掉当前选中的干员,避免误挂到某个干员名下。 */}
-            <p className="text-xs text-neutral-500">通用道具</p>
+            <p className="text-xs text-neutral-500">{dict.editor.commonGadget}</p>
             <div className="flex flex-wrap gap-1.5">
               {(operatorRoleTab === "attack" ? COMMON_GADGETS_ATTACK : COMMON_GADGETS_DEFEND).map((g) => (
                 <button
@@ -1411,7 +1442,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
                   ].join(" ")}
                 >
                   <GadgetChipIcon icon={g.icon} />
-                  {g.name}
+                  {getGadgetDisplayName(g, lang)}
                 </button>
               ))}
             </div>
@@ -1419,11 +1450,12 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
           </div>
 
           {selection?.kind === "wall" && selectedWall && (
-            <WallPanel wall={selectedWall} onPatch={(p) => patch((md) => ({ ...md, walls: md.walls.map((w) => (w.id === selectedWall.id ? { ...w, ...p } : w)) }))} onDelete={deleteSelection} />
+            <WallPanel wall={selectedWall} dict={dict} onPatch={(p) => patch((md) => ({ ...md, walls: md.walls.map((w) => (w.id === selectedWall.id ? { ...w, ...p } : w)) }))} onDelete={deleteSelection} />
           )}
           {selection?.kind === "opening" && (
             <OpeningPanel
               opening={openingsOnFloor.find((o) => o.id === selection.id)}
+              dict={dict}
               onPatch={(p) => patch((md) => ({ ...md, openings: md.openings.map((o) => (o.id === selection.id ? { ...o, ...p } : o)) }))}
               onDelete={deleteSelection}
             />
@@ -1431,6 +1463,7 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
           {selection?.kind === "textLabel" && (
             <TextLabelPanel
               label={textLabelsOnFloor.find((t) => t.id === selection.id)}
+              dict={dict}
               onPatch={(p) => patch((md) => ({ ...md, textLabels: md.textLabels.map((t) => (t.id === selection.id ? { ...t, ...p } : t)) }))}
               onDelete={deleteSelection}
             />
@@ -1439,6 +1472,8 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
             <CommonPlacementPanel
               placement={commonPlacementsOnFloor.find((p) => p.id === selection.id)}
               wallOptions={wallsOnFloor}
+              lang={lang}
+              dict={dict}
               onPatch={(p) => patch((md) => ({ ...md, commonPlacements: md.commonPlacements.map((pl) => (pl.id === selection.id ? { ...pl, ...p } : pl)) }))}
               onDelete={deleteSelection}
             />
@@ -1449,6 +1484,8 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
               operatorId={selection.operatorId}
               operatorName={mapData.operators[selection.operatorId]?.name ?? selection.operatorId}
               wallOptions={wallsOnFloor}
+              lang={lang}
+              dict={dict}
               onPatch={(p) =>
                 patch((md) => {
                   const op = md.operators[selection.operatorId];
@@ -1471,13 +1508,13 @@ export default function MapEditor({ initialMapId }: { initialMapId?: string }) {
           {Object.keys(imagePathHints).length > 0 && (
             <div className="mt-6 space-y-3 border-t border-neutral-200 pt-4 text-xs dark:border-neutral-800">
               <p className="text-neutral-500">
-                导出用底图路径(本地上传的图只是预览,需把图片文件放到 public 对应位置才能在正式页面显示)
+                {dict.editor.imagePathHint}
               </p>
               {mapData.floors
                 .filter((f) => f.id in imagePathHints)
                 .map((f) => (
                   <label key={f.id} className="block">
-                    <span className="text-neutral-500">{f.name}</span>
+                    <span className="text-neutral-500">{getFloorName(f, lang)}</span>
                     <input
                       value={imagePathHints[f.id]}
                       onChange={(e) => setImagePathHints((h) => ({ ...h, [f.id]: e.target.value }))}
@@ -1505,18 +1542,21 @@ function GadgetChipIcon({ icon }: { icon?: string }) {
 
 function WallPanel({
   wall,
+  dict,
   onPatch,
   onDelete,
 }: {
   wall: Wall;
+  dict: Dictionary;
   onPatch: (patch: Partial<Wall>) => void;
   onDelete: () => void;
 }) {
+  const d = dict.editor.panel.wall;
   return (
     <div className="space-y-3">
-      <h2 className="text-sm font-semibold">封墙</h2>
+      <h2 className="text-sm font-semibold">{d.title}</h2>
       <label className="block text-xs text-neutral-500">
-        面板数(徽章显示「墙×N」,留空/1 就只显示「墙」)
+        {d.countLabel}
         <input
           type="number"
           min={1}
@@ -1526,7 +1566,7 @@ function WallPanel({
         />
       </label>
       <label className="block text-xs text-neutral-500">
-        说明
+        {d.noteLabel}
         <textarea
           value={wall.note ?? ""}
           onChange={(e) => onPatch({ note: e.target.value })}
@@ -1535,7 +1575,7 @@ function WallPanel({
         />
       </label>
       <button onClick={onDelete} className="text-sm text-red-600 hover:underline">
-        删除该墙体
+        {d.delete}
       </button>
     </div>
   );
@@ -1543,21 +1583,25 @@ function WallPanel({
 
 function OpeningPanel({
   opening,
+  dict,
   onPatch,
   onDelete,
 }: {
   opening?: Opening;
+  dict: Dictionary;
   onPatch: (patch: Partial<Opening>) => void;
   onDelete: () => void;
 }) {
   if (!opening) return null;
+  const d = dict.editor.panel.opening;
   return (
     <div className="space-y-3">
       <h2 className="text-sm font-semibold">
-        洞口 · <span style={{ color: OPENING_PURPOSE_COLOR[opening.purpose] }}>{OPENING_PURPOSE_LABEL[opening.purpose]}</span>
+        {d.titlePrefix}
+        <span style={{ color: OPENING_PURPOSE_COLOR[opening.purpose] }}>{dict.openingPurpose[opening.purpose]}</span>
       </h2>
       <label className="block text-xs text-neutral-500">
-        类型
+        {d.typeLabel}
         <select
           value={opening.purpose}
           onChange={(e) => onPatch({ purpose: e.target.value as OpeningPurpose })}
@@ -1565,14 +1609,14 @@ function OpeningPanel({
         >
           {OPENING_PURPOSES.map((p) => (
             <option key={p} value={p}>
-              {OPENING_PURPOSE_LABEL[p]}
+              {dict.openingPurpose[p]}
             </option>
           ))}
         </select>
       </label>
       {opening.purpose === "floor" && (
         <label className="block text-xs text-neutral-500">
-          通向(楼层 id)
+          {d.connectsToLabel}
           <input
             value={opening.connectsTo ?? ""}
             onChange={(e) => onPatch({ connectsTo: e.target.value })}
@@ -1581,7 +1625,7 @@ function OpeningPanel({
         </label>
       )}
       <label className="block text-xs text-neutral-500">
-        说明
+        {d.noteLabel}
         <textarea
           value={opening.note ?? ""}
           onChange={(e) => onPatch({ note: e.target.value })}
@@ -1590,7 +1634,7 @@ function OpeningPanel({
         />
       </label>
       <button onClick={onDelete} className="text-sm text-red-600 hover:underline">
-        删除
+        {d.delete}
       </button>
     </div>
   );
@@ -1598,19 +1642,22 @@ function OpeningPanel({
 
 function TextLabelPanel({
   label,
+  dict,
   onPatch,
   onDelete,
 }: {
   label?: TextLabel;
+  dict: Dictionary;
   onPatch: (patch: Partial<TextLabel>) => void;
   onDelete: () => void;
 }) {
   if (!label) return null;
+  const d = dict.editor.panel.textLabel;
   return (
     <div className="space-y-3">
-      <h2 className="text-sm font-semibold">文字标注</h2>
+      <h2 className="text-sm font-semibold">{d.title}</h2>
       <label className="block text-xs text-neutral-500">
-        文字(房间名)
+        {d.textLabel}
         <input
           value={label.text}
           onChange={(e) => onPatch({ text: e.target.value })}
@@ -1618,7 +1665,7 @@ function TextLabelPanel({
         />
       </label>
       <button onClick={onDelete} className="text-sm text-red-600 hover:underline">
-        删除
+        {d.delete}
       </button>
     </div>
   );
@@ -1629,6 +1676,8 @@ function PlacementPanel({
   operatorId,
   operatorName,
   wallOptions,
+  lang,
+  dict,
   onPatch,
   onDelete,
 }: {
@@ -1636,30 +1685,36 @@ function PlacementPanel({
   operatorId: string;
   operatorName: string;
   wallOptions: Wall[];
+  lang: Locale;
+  dict: Dictionary;
   onPatch: (patch: Partial<Placement>) => void;
   onDelete: () => void;
 }) {
   if (!placement) return null;
+  const d = dict.editor.panel.placement;
   return (
     <div className="space-y-3">
-      <h2 className="text-sm font-semibold">道具位 · {operatorName}</h2>
+      <h2 className="text-sm font-semibold">
+        {d.titlePrefix}
+        {operatorName}
+      </h2>
       <label className="block text-xs text-neutral-500">
-        道具
+        {d.gadgetLabel}
         <select
           value={placement.gadgetId ?? ""}
           onChange={(e) => onPatch({ gadgetId: e.target.value || undefined })}
           className="mt-1 w-full rounded border border-neutral-300 px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-800"
         >
-          <option value="">(未设置)</option>
+          <option value="">{d.unset}</option>
           {getGadgetOptions(operatorId).map((g) => (
             <option key={g.id} value={g.id}>
-              {g.name}
+              {getGadgetDisplayName(g, lang)}
             </option>
           ))}
         </select>
       </label>
       <label className="block text-xs text-neutral-500">
-        标题
+        {d.titleLabel}
         <input
           value={placement.title}
           onChange={(e) => onPatch({ title: e.target.value })}
@@ -1667,7 +1722,7 @@ function PlacementPanel({
         />
       </label>
       <label className="block text-xs text-neutral-500">
-        说明
+        {d.descriptionLabel}
         <textarea
           value={placement.description}
           onChange={(e) => onPatch({ description: e.target.value })}
@@ -1676,18 +1731,18 @@ function PlacementPanel({
         />
       </label>
       <label className="block text-xs text-neutral-500">
-        等级
+        {d.tierLabel}
         <select
           value={placement.tier}
           onChange={(e) => onPatch({ tier: e.target.value as PlacementTier })}
           className="mt-1 w-full rounded border border-neutral-300 px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-800"
         >
-          <option value="core">核心位</option>
-          <option value="alternative">备用位</option>
+          <option value="core">{d.core}</option>
+          <option value="alternative">{d.alternative}</option>
         </select>
       </label>
       <label className="block text-xs text-neutral-500">
-        朝向角度(0=右,顺时针,留空=无朝向)
+        {d.facingLabel}
         <input
           type="number"
           value={placement.facing ?? ""}
@@ -1696,13 +1751,13 @@ function PlacementPanel({
         />
       </label>
       <label className="block text-xs text-neutral-500">
-        依赖墙体
+        {d.requiresWallLabel}
         <select
           value={placement.requiresWall ?? ""}
           onChange={(e) => onPatch({ requiresWall: e.target.value || undefined })}
           className="mt-1 w-full rounded border border-neutral-300 px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-800"
         >
-          <option value="">无</option>
+          <option value="">{d.none}</option>
           {wallOptions.map((w) => (
             <option key={w.id} value={w.id}>
               {w.id}
@@ -1711,7 +1766,7 @@ function PlacementPanel({
         </select>
       </label>
       <label className="block text-xs text-neutral-500">
-        截图路径
+        {d.screenshotLabel}
         <input
           value={placement.screenshot ?? ""}
           onChange={(e) => onPatch({ screenshot: e.target.value || undefined })}
@@ -1719,7 +1774,7 @@ function PlacementPanel({
         />
       </label>
       <button onClick={onDelete} className="text-sm text-red-600 hover:underline">
-        删除该道具位
+        {d.delete}
       </button>
     </div>
   );
@@ -1730,35 +1785,40 @@ function PlacementPanel({
 function CommonPlacementPanel({
   placement,
   wallOptions,
+  lang,
+  dict,
   onPatch,
   onDelete,
 }: {
   placement?: Placement;
   wallOptions: Wall[];
+  lang: Locale;
+  dict: Dictionary;
   onPatch: (patch: Partial<Placement>) => void;
   onDelete: () => void;
 }) {
   if (!placement) return null;
+  const d = dict.editor.panel.placement;
   return (
     <div className="space-y-3">
-      <h2 className="text-sm font-semibold">通用道具位</h2>
+      <h2 className="text-sm font-semibold">{d.commonTitle}</h2>
       <label className="block text-xs text-neutral-500">
-        道具
+        {d.gadgetLabel}
         <select
           value={placement.gadgetId ?? ""}
           onChange={(e) => onPatch({ gadgetId: e.target.value || undefined })}
           className="mt-1 w-full rounded border border-neutral-300 px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-800"
         >
-          <option value="">(未设置)</option>
+          <option value="">{d.unset}</option>
           {[...COMMON_GADGETS_DEFEND, ...COMMON_GADGETS_ATTACK].map((g) => (
             <option key={g.id} value={g.id}>
-              {g.name}
+              {getGadgetDisplayName(g, lang)}
             </option>
           ))}
         </select>
       </label>
       <label className="block text-xs text-neutral-500">
-        标题
+        {d.titleLabel}
         <input
           value={placement.title}
           onChange={(e) => onPatch({ title: e.target.value })}
@@ -1766,7 +1826,7 @@ function CommonPlacementPanel({
         />
       </label>
       <label className="block text-xs text-neutral-500">
-        说明
+        {d.descriptionLabel}
         <textarea
           value={placement.description}
           onChange={(e) => onPatch({ description: e.target.value })}
@@ -1775,18 +1835,18 @@ function CommonPlacementPanel({
         />
       </label>
       <label className="block text-xs text-neutral-500">
-        等级
+        {d.tierLabel}
         <select
           value={placement.tier}
           onChange={(e) => onPatch({ tier: e.target.value as PlacementTier })}
           className="mt-1 w-full rounded border border-neutral-300 px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-800"
         >
-          <option value="core">核心位</option>
-          <option value="alternative">备用位</option>
+          <option value="core">{d.core}</option>
+          <option value="alternative">{d.alternative}</option>
         </select>
       </label>
       <label className="block text-xs text-neutral-500">
-        朝向角度(0=右,顺时针,留空=无朝向)
+        {d.facingLabel}
         <input
           type="number"
           value={placement.facing ?? ""}
@@ -1795,13 +1855,13 @@ function CommonPlacementPanel({
         />
       </label>
       <label className="block text-xs text-neutral-500">
-        依赖墙体
+        {d.requiresWallLabel}
         <select
           value={placement.requiresWall ?? ""}
           onChange={(e) => onPatch({ requiresWall: e.target.value || undefined })}
           className="mt-1 w-full rounded border border-neutral-300 px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-800"
         >
-          <option value="">无</option>
+          <option value="">{d.none}</option>
           {wallOptions.map((w) => (
             <option key={w.id} value={w.id}>
               {w.id}
@@ -1810,7 +1870,7 @@ function CommonPlacementPanel({
         </select>
       </label>
       <label className="block text-xs text-neutral-500">
-        截图路径
+        {d.screenshotLabel}
         <input
           value={placement.screenshot ?? ""}
           onChange={(e) => onPatch({ screenshot: e.target.value || undefined })}
@@ -1818,7 +1878,7 @@ function CommonPlacementPanel({
         />
       </label>
       <button onClick={onDelete} className="text-sm text-red-600 hover:underline">
-        删除该道具位
+        {d.delete}
       </button>
     </div>
   );

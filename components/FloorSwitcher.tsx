@@ -1,14 +1,17 @@
 "use client";
 
 import type { Floor } from "@/lib/schema";
+import { getFloorName } from "@/lib/maps";
+import type { Locale } from "@/lib/i18n";
 
 interface FloorSwitcherProps {
   floors: Floor[];
   activeFloorId: string;
+  lang: Locale;
   onChange: (floorId: string) => void;
 }
 
-export default function FloorSwitcher({ floors, activeFloorId, onChange }: FloorSwitcherProps) {
+export default function FloorSwitcher({ floors, activeFloorId, lang, onChange }: FloorSwitcherProps) {
   return (
     <div className="flex gap-1 rounded-full bg-white/90 p-1 shadow-md backdrop-blur dark:bg-neutral-900/90">
       {floors.map((floor) => {
@@ -24,7 +27,7 @@ export default function FloorSwitcher({ floors, activeFloorId, onChange }: Floor
                 : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800",
             ].join(" ")}
           >
-            {floor.name}
+            {getFloorName(floor, lang)}
           </button>
         );
       })}

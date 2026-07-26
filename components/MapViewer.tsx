@@ -4,6 +4,7 @@ import MapStage from "@/components/MapStage";
 import { COMMON_GADGET_COLOR, DrawingShape, getOperatorColor, OpeningMarker, PlacementMarker, TextLabelMarker, WallLine } from "@/components/mapMarkers";
 import { getCommonGadgetIcon } from "@/lib/operators";
 import type { Floor, MapData, SelectedMarker } from "@/lib/schema";
+import type { Dictionary } from "@/app/[lang]/dictionaries";
 
 interface MapViewerProps {
   mapData: MapData;
@@ -13,6 +14,7 @@ interface MapViewerProps {
   /** 需要闪烁高亮的墙体 id(M2 的 requiresWall 联动会用到) */
   highlightWallId?: string | null;
   onSelect: (marker: SelectedMarker) => void;
+  dict: Dictionary;
 }
 
 export default function MapViewer({
@@ -21,6 +23,7 @@ export default function MapViewer({
   activeOperatorId,
   highlightWallId,
   onSelect,
+  dict,
 }: MapViewerProps) {
   const walls = mapData.walls.filter((w) => w.floor === floor.id);
   const openings = mapData.openings.filter((o) => o.floor === floor.id);
@@ -53,6 +56,7 @@ export default function MapViewer({
         <WallLine
           key={wall.id}
           wall={wall}
+          wallLabel={dict.markerDetail.wallMapLabel}
           highlighted={highlightWallId === wall.id}
           onClick={() => onSelect({ kind: "wall", data: wall })}
         />
@@ -62,6 +66,7 @@ export default function MapViewer({
         <OpeningMarker
           key={opening.id}
           opening={opening}
+          glyph={dict.openingGlyph[opening.purpose]}
           onClick={() => onSelect({ kind: "opening", data: opening })}
         />
       ))}
