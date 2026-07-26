@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -46,7 +47,9 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <LanguageSwitcher lang={lang} />
+        <Suspense fallback={null}>
+          <LanguageSwitcher lang={lang} />
+        </Suspense>
         {children}
       </body>
     </html>
