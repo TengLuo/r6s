@@ -66,7 +66,12 @@ export default async function Home({
           </span>
         </div>
 
-        <div className="mt-4 inline-flex rounded-full border border-white/15 bg-white/5 p-1 text-sm font-medium">
+        <div
+          className={[
+            "mt-4 inline-flex rounded-full border p-1 text-sm font-medium transition-colors",
+            isEdit ? "border-amber-500/40 bg-amber-500/10" : "border-white/15 bg-white/5",
+          ].join(" ")}
+        >
           <Link
             href={`/${lang}?mode=guide`}
             className={[
